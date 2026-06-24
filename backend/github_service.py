@@ -58,6 +58,12 @@ async def fetch_changes(repo_url: str, from_tag: str, to_tag: str) -> Dict[str, 
     async with httpx.AsyncClient() as client:
         response = await client.get(api_url, headers=headers, timeout=15.0)
         
+        # Handle 401 Unauthorized (Bad credentials) gracefully by falling back to unauthenticated
+        if response.status_code == 401 and "Authorization" in headers:
+            print("[WARN] GitHub token returned 401 (Bad Credentials). Retrying without token...")
+            del headers["Authorization"]
+            response = await client.get(api_url, headers=headers, timeout=15.0)
+            
         # Check for rate limiting specifically
         if response.status_code in (403, 429):
             rate_limit_remaining = response.headers.get("x-ratelimit-remaining")
