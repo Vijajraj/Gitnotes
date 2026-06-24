@@ -1,4 +1,4 @@
-export const DEMO_MODE = true;
+export const DEMO_MODE = false;
 
 export const demoData = {
   technical_changelog: `# Changelog
