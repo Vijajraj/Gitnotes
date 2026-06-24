@@ -18,7 +18,7 @@ sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='repla
 sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
 
 from github_service import parse_github_url
-from groq_service import parse_safely, AgentState, critic_validator_node
+from groq_service import parse_safely
 
 passed = 0
 failed = 0
@@ -94,78 +94,7 @@ try:
 except (ValueError, json.JSONDecodeError):
     test("Invalid JSON raises error", True, True)
 
-# ===========================
-# 3. AgentState Model Tests
-# ===========================
-print("\n=== AgentState Model Tests ===")
-
-state = AgentState()
-test("Default commits is empty list", state.commits, [])
-test("Default technical_changelog is empty", state.technical_changelog, "")
-test("Default breaking_detected is False", state.breaking_detected, False)
-test("Default categories is empty dict", state.categories, {})
-test("Default iterations is 0", state.iterations, 0)
-test("Default critic_feedback is empty", state.critic_feedback, "")
-
-# ===========================
-# 4. Critic Validator Tests
-# ===========================
-print("\n=== Critic Validator Tests ===")
-
-# Test: valid state passes
-good_state = AgentState(
-    commits=[{"sha": "abc1234", "subject": "Add feature", "message": "Add feature"}],
-    technical_changelog="## [v1.0.0]\n### Added\n- Feature",
-    executive_summary="### Release Overview\nGood release.",
-    breaking_detected=False,
-    categories={"breaking": [], "features": ["Feature"]},
-    iterations=0
-)
-result = critic_validator_node(good_state)
-test("Valid state passes critic (no feedback)", result.get("critic_feedback", ""), "")
-
-# Test: empty changelog triggers feedback
-bad_state = AgentState(
-    commits=[{"sha": "abc1234", "subject": "fix bug", "message": "fix bug"}],
-    technical_changelog="",
-    executive_summary="### Overview",
-    breaking_detected=False,
-    categories={},
-    iterations=0
-)
-result = critic_validator_node(bad_state)
-test("Empty changelog triggers feedback", bool(result.get("critic_feedback")), True)
-
-# Test: error changelog triggers feedback
-error_state = AgentState(
-    commits=[{"sha": "abc1234", "subject": "fix bug", "message": "fix bug"}],
-    technical_changelog="## [Error]\n\nFailed to generate",
-    executive_summary="Error occurred",
-    breaking_detected=False,
-    categories={},
-    iterations=0
-)
-result = critic_validator_node(error_state)
-test("Error changelog triggers feedback", bool(result.get("critic_feedback")), True)
-
-# Test: missed breaking changes detected
-breaking_state = AgentState(
-    commits=[
-        {"sha": "abc1234", "subject": "BREAKING: remove old API", "message": "BREAKING: remove old API"},
-        {"sha": "def5678", "subject": "fix typo", "message": "fix typo"}
-    ],
-    technical_changelog="## [v2.0.0]\n### Fixed\n- Typo",
-    executive_summary="### Overview\nMinor fixes.",
-    breaking_detected=False,
-    categories={"breaking": [], "fixes": ["fix typo"]},
-    iterations=0
-)
-result = critic_validator_node(breaking_state)
-test("Missed breaking change detected", bool(result.get("critic_feedback")), True)
-test("Missed breaking feedback mentions commit", "abc1234" in result.get("critic_feedback", ""), True)
-
-# Test: iterations increment on failure
-test("Iterations incremented on failure", result.get("iterations"), 1)
+# (LangGraph critic and validator tests removed in direct pipeline mode)
 
 # ===========================
 # Summary
