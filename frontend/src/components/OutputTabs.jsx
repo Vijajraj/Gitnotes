@@ -137,20 +137,20 @@ export default function OutputTabs({ result }) {
               <div className="prose prose-invert max-w-none text-zinc-300 text-xs md:text-sm">
                 <Markdown
                   components={{
-                    h1: ({node, ...props}) => <h1 className="text-lg md:text-xl font-bold text-white border-b border-zinc-900 pb-2 mb-4 uppercase tracking-wider" {...props} />,
-                    h2: ({node, ...props}) => <h2 className="text-sm md:text-base font-bold text-zinc-200 mt-6 mb-3 border-b border-zinc-950 pb-1" {...props} />,
-                    h3: ({node, ...props}) => <h3 className="text-xs font-semibold text-zinc-400 mt-4 mb-2 uppercase tracking-widest" {...props} />,
-                    p: ({node, ...props}) => <p className="leading-relaxed mb-3 text-zinc-400" {...props} />,
-                    ul: ({node, ...props}) => <ul className="list-disc pl-5 mb-4 space-y-1.5 text-zinc-400" {...props} />,
-                    li: ({node, ...props}) => <li className="leading-relaxed" {...props} />,
-                    code: ({node, inline, className, children, ...props}) => {
+                    h1: ({_node, ...props}) => <h1 className="text-lg md:text-xl font-bold text-white border-b border-zinc-900 pb-2 mb-4 uppercase tracking-wider" {...props} />,
+                    h2: ({_node, ...props}) => <h2 className="text-sm md:text-base font-bold text-zinc-200 mt-6 mb-3 border-b border-zinc-950 pb-1" {...props} />,
+                    h3: ({_node, ...props}) => <h3 className="text-xs font-semibold text-zinc-400 mt-4 mb-2 uppercase tracking-widest" {...props} />,
+                    p: ({_node, ...props}) => <p className="leading-relaxed mb-3 text-zinc-400" {...props} />,
+                    ul: ({_node, ...props}) => <ul className="list-disc pl-5 mb-4 space-y-1.5 text-zinc-400" {...props} />,
+                    li: ({_node, ...props}) => <li className="leading-relaxed" {...props} />,
+                    code: ({_node, inline, _className, children, ...props}) => {
                       return inline ? (
                         <code className="bg-zinc-950 px-1 py-0.5 rounded text-[11px] text-zinc-300 font-mono border border-zinc-900" {...props}>{children}</code>
                       ) : (
                         <pre className="bg-zinc-950 p-4 rounded border border-zinc-900 overflow-x-auto text-[11px] text-zinc-400 font-mono mb-3"><code {...props}>{children}</code></pre>
                       )
                     },
-                    blockquote: ({node, children, ...props}) => (
+                    blockquote: ({_node, children, ...props}) => (
                       <blockquote className="border-l-2 border-zinc-700 pl-3 py-0.5 italic text-zinc-500 my-3" {...props}>{children}</blockquote>
                     )
                   }}
@@ -164,20 +164,20 @@ export default function OutputTabs({ result }) {
               <div className="prose prose-invert max-w-none text-zinc-300 text-xs md:text-sm">
                 <Markdown
                   components={{
-                    h1: ({node, ...props}) => <h1 className="text-lg md:text-xl font-bold text-white border-b border-zinc-900 pb-2 mb-4 uppercase tracking-wider" {...props} />,
-                    h2: ({node, ...props}) => <h2 className="text-sm md:text-base font-bold text-zinc-200 mt-6 mb-3" {...props} />,
-                    h3: ({node, ...props}) => <h3 className="text-xs font-semibold text-zinc-400 mt-4 mb-2 border-l border-zinc-700 pl-2" {...props} />,
-                    p: ({node, ...props}) => <p className="leading-relaxed mb-3 text-zinc-400" {...props} />,
-                    ul: ({node, ...props}) => <ul className="list-disc pl-5 mb-4 space-y-1.5 text-zinc-400" {...props} />,
-                    li: ({node, ...props}) => <li className="leading-relaxed" {...props} />,
-                    code: ({node, inline, className, children, ...props}) => {
+                    h1: ({_node, ...props}) => <h1 className="text-lg md:text-xl font-bold text-white border-b border-zinc-900 pb-2 mb-4 uppercase tracking-wider" {...props} />,
+                    h2: ({_node, ...props}) => <h2 className="text-sm md:text-base font-bold text-zinc-200 mt-6 mb-3" {...props} />,
+                    h3: ({_node, ...props}) => <h3 className="text-xs font-semibold text-zinc-400 mt-4 mb-2 border-l border-zinc-700 pl-2" {...props} />,
+                    p: ({_node, ...props}) => <p className="leading-relaxed mb-3 text-zinc-400" {...props} />,
+                    ul: ({_node, ...props}) => <ul className="list-disc pl-5 mb-4 space-y-1.5 text-zinc-400" {...props} />,
+                    li: ({_node, ...props}) => <li className="leading-relaxed" {...props} />,
+                    code: ({_node, inline, _className, children, ...props}) => {
                       return inline ? (
                         <code className="bg-zinc-950 px-1 py-0.5 rounded text-[11px] text-zinc-300 font-mono" {...props}>{children}</code>
                       ) : (
                         <pre className="bg-zinc-950 p-4 rounded border border-zinc-900 overflow-x-auto text-[11px] text-zinc-400 font-mono mb-3"><code {...props}>{children}</code></pre>
                       )
                     },
-                    blockquote: ({node, children, ...props}) => {
+                    blockquote: ({_node, children}) => {
                       return (
                         <div className="my-4 bg-zinc-900/30 border border-zinc-800 rounded p-3.5 text-zinc-400 text-xs italic">
                           {children}

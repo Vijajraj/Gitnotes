@@ -6,9 +6,9 @@ from typing import List, Dict, Any, Optional
 # Startup GitHub Token Check print
 token = os.getenv("GITHUB_TOKEN")
 if token and token.strip():
-    print("✓ GitHub Token: authenticated (5000 req/hr)")
+    print("[OK] GitHub Token: authenticated (5000 req/hr)")
 else:
-    print("⚠ GitHub Token: not set (60 req/hr limit)")
+    print("[WARN] GitHub Token: not set (60 req/hr limit)")
 
 def parse_github_url(url: str) -> tuple[str, str]:
     """

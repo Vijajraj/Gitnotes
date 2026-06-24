@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Terminal, Check, Loader2 } from 'lucide-react';
+import { Terminal } from 'lucide-react';
 
 const STEPS = [
   "🔍 Ingesting repository commit history...",
