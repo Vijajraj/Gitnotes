@@ -34,7 +34,7 @@ const getRepoWatermark = (url) => {
 
 export default function App() {
   /* === STATE & EFFECTS === */
-  const [theme, setTheme] = useState('dark'); // 'dark' | 'light' | 'system'
+  const [theme, setTheme] = useState('light'); // 'dark' | 'light' | 'system'
   const [repoUrl, setRepoUrl] = useState('https://github.com/fastapi/fastapi');
   const [fromTag, setFromTag] = useState('0.100.0');
   const [toTag, setToTag] = useState('0.101.0');
