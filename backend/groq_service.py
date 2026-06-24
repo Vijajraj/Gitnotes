@@ -58,6 +58,10 @@ PR-First Ingestion Rule:
 - When a change has a PR title explicitly provided, it takes precedence over raw git commit messages as PR titles are more descriptive and intentional.
 - Weight PR descriptions and merge details more heavily in the output changelog categories and summaries.
 
+Conciseness Guideline:
+- Keep the generated descriptions in "technical_changelog" and "executive_summary" concise, factual, and high-impact.
+- Group related changes together instead of writing overly detailed sentences for every single commit.
+
 Commits and PRs:
 {commits_text}
 
@@ -90,7 +94,7 @@ You MUST return a JSON object with exactly the following structure:
             model="llama-3.1-8b-instant",
             messages=messages,
             temperature=0.2,
-            max_tokens=3000,
+            max_tokens=6000,
             response_format={"type": "json_object"}
         )
         
