@@ -109,7 +109,11 @@ export default function App() {
       setLoading(false);
     } else {
       try {
-        const response = await fetch('http://localhost:8000/api/generate', {
+        const apiUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+          ? 'http://localhost:8000'
+          : (import.meta.env.VITE_API_URL || 'https://gitnotes-backend.onrender.com');
+
+        const response = await fetch(`${apiUrl}/api/generate`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
