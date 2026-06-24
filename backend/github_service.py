@@ -58,9 +58,10 @@ async def resolve_tag(client: httpx.AsyncClient, owner: str, repo: str, tag: str
         
     return tag
 
-async def fetch_changes(repo_url: str, from_tag: str, to_tag: str) -> Dict[str, Any]:
+async def fetch_changes(repo_url: str, from_tag: Optional[str] = None, to_tag: Optional[str] = None) -> Dict[str, Any]:
     """
     Fetches the commits between from_tag and to_tag using GitHub API.
+    If tags are missing, dynamically falls back to listing recent commits.
     Handles specific errors (rate limits, missing tags, missing repos) gracefully.
     Returns a dict with commits list and capping metadata.
     """
@@ -87,45 +88,81 @@ async def fetch_changes(repo_url: str, from_tag: str, to_tag: str) -> Dict[str, 
         if repo_check.status_code == 404:
             raise ValueError(f"Repository {owner}/{repo} does not exist")
             
-        # Resolve tags (dynamically handles v-prefix mismatch)
-        resolved_from = await resolve_tag(client, owner, repo, from_tag, headers)
-        resolved_to = await resolve_tag(client, owner, repo, to_tag, headers)
+        # Clean up tags inputs
+        from_tag_clean = from_tag.strip() if from_tag and from_tag.strip() else None
+        to_tag_clean = to_tag.strip() if to_tag and to_tag.strip() else None
         
-        api_url = f"https://api.github.com/repos/{owner}/{repo}/compare/{resolved_from}...{resolved_to}"
-        response = await client.get(api_url, headers=headers, timeout=15.0)
+        commits_data = []
         
-        # Check for rate limiting specifically
-        if response.status_code in (403, 429):
-            rate_limit_remaining = response.headers.get("x-ratelimit-remaining")
-            if rate_limit_remaining == "0" or "rate limit" in response.text.lower():
-                raise ValueError("GitHub rate limit exceeded. Add GITHUB_TOKEN to increase limit.")
-        
-        # Check for not found errors specifically
-        if response.status_code == 404:
-            # Diagnose which tag is missing (using the original inputs for error message consistency)
-            from_check = await client.get(f"https://api.github.com/repos/{owner}/{repo}/commits/{resolved_from}", headers=headers)
-            if from_check.status_code == 404:
-                raise ValueError(f"Tag '{from_tag}' not found in {owner}/{repo}")
+        if not from_tag_clean and not to_tag_clean:
+            # Mode A: Neither tag provided. Fetch latest 30 commits from default branch.
+            api_url = f"https://api.github.com/repos/{owner}/{repo}/commits?per_page=30"
+            response = await client.get(api_url, headers=headers, timeout=15.0)
+            if response.status_code == 200:
+                commits_data = response.json()
+            else:
+                raise ValueError(f"Failed to fetch commits: GitHub API returned {response.status_code}")
                 
-            to_check = await client.get(f"https://api.github.com/repos/{owner}/{repo}/commits/{resolved_to}", headers=headers)
-            if to_check.status_code == 404:
-                raise ValueError(f"Tag '{to_tag}' not found in {owner}/{repo}")
+        elif from_tag_clean and not to_tag_clean:
+            # Mode B: Only from_tag provided. Compare from_tag with default branch.
+            repo_data = repo_check.json()
+            default_branch = repo_data.get("default_branch", "main")
+            
+            resolved_from = await resolve_tag(client, owner, repo, from_tag_clean, headers)
+            api_url = f"https://api.github.com/repos/{owner}/{repo}/compare/{resolved_from}...{default_branch}"
+            response = await client.get(api_url, headers=headers, timeout=15.0)
+            if response.status_code == 200:
+                commits_data = response.json().get("commits", [])
+            else:
+                raise ValueError(f"Failed to compare {from_tag_clean} with default branch: GitHub API returned {response.status_code}")
                 
-            # Generic tag/compare mismatch fallback
-            raise ValueError(f"Tag '{from_tag}' or '{to_tag}' not found in {owner}/{repo}")
+        elif not from_tag_clean and to_tag_clean:
+            # Mode C: Only to_tag provided. Fetch latest 30 commits leading up to to_tag.
+            resolved_to = await resolve_tag(client, owner, repo, to_tag_clean, headers)
+            api_url = f"https://api.github.com/repos/{owner}/{repo}/commits?sha={resolved_to}&per_page=30"
+            response = await client.get(api_url, headers=headers, timeout=15.0)
+            if response.status_code == 200:
+                commits_data = response.json()
+            else:
+                raise ValueError(f"Failed to fetch commits for {to_tag_clean}: GitHub API returned {response.status_code}")
+                
+        else:
+            # Mode D: Both tags provided. Compare tags as usual.
+            resolved_from = await resolve_tag(client, owner, repo, from_tag_clean, headers)
+            resolved_to = await resolve_tag(client, owner, repo, to_tag_clean, headers)
             
-        elif response.status_code != 200:
-            error_msg = f"GitHub API error: {response.status_code}"
-            try:
-                error_detail = response.json().get("message", "")
-                if error_detail:
-                    error_msg += f" - {error_detail}"
-            except Exception:
-                pass
-            raise ValueError(error_msg)
+            api_url = f"https://api.github.com/repos/{owner}/{repo}/compare/{resolved_from}...{resolved_to}"
+            response = await client.get(api_url, headers=headers, timeout=15.0)
             
-        data = response.json()
-        commits_data = data.get("commits", [])
+            # Check for rate limiting specifically
+            if response.status_code in (403, 429):
+                rate_limit_remaining = response.headers.get("x-ratelimit-remaining")
+                if rate_limit_remaining == "0" or "rate limit" in response.text.lower():
+                    raise ValueError("GitHub rate limit exceeded. Add GITHUB_TOKEN to increase limit.")
+            
+            # Check for not found errors specifically
+            if response.status_code == 404:
+                from_check = await client.get(f"https://api.github.com/repos/{owner}/{repo}/commits/{resolved_from}", headers=headers)
+                if from_check.status_code == 404:
+                    raise ValueError(f"Tag '{from_tag_clean}' not found in {owner}/{repo}")
+                    
+                to_check = await client.get(f"https://api.github.com/repos/{owner}/{repo}/commits/{resolved_to}", headers=headers)
+                if to_check.status_code == 404:
+                    raise ValueError(f"Tag '{to_tag_clean}' not found in {owner}/{repo}")
+                    
+                raise ValueError(f"Tag '{from_tag_clean}' or '{to_tag_clean}' not found in {owner}/{repo}")
+                
+            elif response.status_code != 200:
+                error_msg = f"GitHub API error: {response.status_code}"
+                try:
+                    error_detail = response.json().get("message", "")
+                    if error_detail:
+                        error_msg += f" - {error_detail}"
+                except Exception:
+                    pass
+                raise ValueError(error_msg)
+                
+            commits_data = response.json().get("commits", [])
         
         if not commits_data:
             raise ValueError("No commits found between these tags")

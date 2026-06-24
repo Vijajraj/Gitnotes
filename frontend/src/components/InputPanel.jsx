@@ -14,7 +14,7 @@ export default function InputPanel({
 }) {
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!repoUrl.trim() || !fromTag.trim() || !toTag.trim()) return;
+    if (!repoUrl.trim()) return;
     onSubmit();
   };
 
@@ -59,7 +59,7 @@ export default function InputPanel({
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-[10px] font-semibold text-zinc-400 uppercase tracking-wider mb-1.5">
-              From Tag
+              From Tag <span className="text-[9px] text-zinc-550 lowercase font-normal">(optional)</span>
             </label>
             <input
               type="text"
@@ -68,12 +68,11 @@ export default function InputPanel({
               placeholder="v0.100.0"
               disabled={isLoading}
               className="w-full bg-zinc-950 border border-zinc-850 rounded px-3 py-2 text-zinc-100 placeholder-zinc-600 text-xs transition focus:outline-none focus:border-zinc-600 focus:ring-0 disabled:opacity-40"
-              required
             />
           </div>
           <div>
             <label className="block text-[10px] font-semibold text-zinc-400 uppercase tracking-wider mb-1.5">
-              To Tag
+              To Tag <span className="text-[9px] text-zinc-550 lowercase font-normal">(optional)</span>
             </label>
             <input
               type="text"
@@ -82,7 +81,6 @@ export default function InputPanel({
               placeholder="v0.101.0"
               disabled={isLoading}
               className="w-full bg-zinc-950 border border-zinc-850 rounded px-3 py-2 text-zinc-100 placeholder-zinc-600 text-xs transition focus:outline-none focus:border-zinc-600 focus:ring-0 disabled:opacity-40"
-              required
             />
           </div>
         </div>

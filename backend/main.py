@@ -26,10 +26,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+from typing import Optional
+
 class ChangelogRequest(BaseModel):
     repo_url: str = Field(..., description="GitHub repository URL (e.g., https://github.com/fastapi/fastapi)")
-    from_tag: str = Field(..., description="Starting git tag/ref (e.g., v0.100.0)")
-    to_tag: str = Field(..., description="Ending git tag/ref (e.g., v0.101.0)")
+    from_tag: Optional[str] = Field(None, description="Starting git tag/ref (e.g., v0.100.0)")
+    to_tag: Optional[str] = Field(None, description="Ending git tag/ref (e.g., v0.101.0)")
 
 @app.post("/api/generate")
 async def generate_notes(request: ChangelogRequest):
