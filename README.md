@@ -6,12 +6,13 @@ With a single action, it simultaneously generates a **technical changelog** for 
 
 ---
 
-## 🎨 Vercel/Linear-Inspired Developer Aesthetic
+## 🎨 "Linear meets Vercel" Premium Redesign
 
-Built with a dark, hyper-minimalist developer dashboard style:
-- **Terminal Simulation**: An animated console progress simulator that outputs step-by-step pipeline status.
-- **Interactive Outputs**: Tabs to easily switch between *Technical Changelog*, *Executive Summary*, and *Categorized Log*.
-- **Metrics Dashboard**: Quick statistics on total commits analyzed, PR counts, execution times, and breaking changes.
+Built from scratch with a clean, confident, and professional developer dashboard style:
+- **Dual Mode Theme System**: Deep dark (#0C0C0E) primary dark theme and pure white (#FAFAFA) light theme.
+- **Three-State Toggle**: Pill-shaped switcher `[ ☀ | ◑ | ☾ ]` supporting Light, System, and Dark themes.
+- **Side-by-Side Layout**: Fixed 320px sidebar for controls and a flexible main panel for viewport displays.
+- **Pipeline Tracing**: Monospace vertical status checklist (`Fetch commits`, `Analyze changes`, `Generate docs`, `Complete`) with custom pulse glows and success states.
 - **Breaking Changes Banner**: Auto-detects critical breaking changes or deprecations and presents them in a distinct crimson warning banner.
 
 ---
@@ -20,7 +21,7 @@ Built with a dark, hyper-minimalist developer dashboard style:
 
 - **Dual-Audience Outputs**: One-click generation of engineering changelogs and plain-English summaries.
 - **Dynamic Tag Resolution**: Automatically detects and heals tag mismatches (e.g. resolves `v0.100.0` vs `0.100.0` depending on repository convention).
-- **Optional Tags Fallback**: Leaving tags blank dynamically falls back to analyzing the latest 30 commits of the repository's default branch. Providing a single tag compares it to the default branch.
+- **Optional Tags Fallback**: Leaving tags blank dynamically falls back to analyzing the latest 30 commits of the repository's default branch.
 - **Graceful Token Fallback**: Automatically bypasses credentials issues by falling back to unauthenticated requests if an invalid `GITHUB_TOKEN` is detected.
 - **Zero-Fail Demo Mode**: A toggleable offline mode (`DEMO_MODE` inside `demoData.js`) that uses cached data and mocks the generation timeline—essential for zero-fail hackathon presentations.
 
@@ -28,9 +29,29 @@ Built with a dark, hyper-minimalist developer dashboard style:
 
 ## ⚡ Technology Stack
 
-- **Backend**: Python, FastAPI, Groq LLaMA 3.1 8B (via official `groq` SDK), `python-dotenv`, `httpx`
-- **Frontend**: React, Vite, Tailwind CSS v4, `lucide-react` icons
+- **Backend**: Python, FastAPI, Groq LLaMA 3.3 70B (`llama-3.3-70b-versatile` via official `groq` SDK), `python-dotenv`, `httpx`
+- **Frontend**: React, Vite, Tailwind CSS v4, `react-markdown`
 - **Package Managers**: `pip` (Python), `npm` (Node.js)
+
+---
+
+## ☁️ Production Deployment
+
+### 1. Backend (Render Web Service)
+This repository includes a `render.yaml` Blueprint specification for one-click Render deployment:
+1. Go to the [Render Dashboard](https://dashboard.render.com/) and click **New +** ➔ **Blueprint**.
+2. Select your `Gitnotes` repository.
+3. Configure the following environment variables:
+   * `GITHUB_TOKEN`: *Your GitHub Personal Access Token* (Classic or Fine-grained read-only)
+   * `GROQ_API_KEY`: *Your Groq API Key*
+4. Click **Apply**. Render will assign a public URL (e.g. `https://gitnotes-backend.onrender.com`).
+
+### 2. Frontend (Vercel Host)
+1. Deploy your frontend folder to Vercel.
+2. In the Vercel Project settings, add an **Environment Variable**:
+   * **Key**: `VITE_API_URL`
+   * **Value**: *Your Render URL* (e.g. `https://gitnotes-backend.onrender.com`)
+3. Trigger a redeploy to apply the environment variable.
 
 ---
 
@@ -75,7 +96,7 @@ Built with a dark, hyper-minimalist developer dashboard style:
 
 ---
 
-## 🏃 Running the Application
+## 🏃 Running the Application Locally
 
 1. **Start the Backend Server**:
    From the `backend/` directory (with virtualenv active):
@@ -89,17 +110,15 @@ Built with a dark, hyper-minimalist developer dashboard style:
    ```bash
    npm run dev
    ```
-   Open **`http://localhost:5173`** (or the port Vite prompts) in your browser.
+   Open **`http://localhost:5173`** in your browser.
 
 ---
 
 ## 🧪 Testing
 
-The backend includes a comprehensive, dependencies-free unit test suite checking URL parsing, JSON formatting, and edge cases.
-To run the tests:
+To run the backend unit test suite:
 ```bash
 cd backend
-# With virtualenv active:
 python test_services.py
 ```
 
