@@ -1,78 +1,132 @@
 @import "tailwindcss";
 
-@theme {
-  --color-bg-base: #0A0F1A;
-  --color-bg-panel: #0D1420;
-  --color-border-dim: #1E2D45;
-  --color-border-active: #2D7EF8;
-  --color-text-dim: #3D5278;
-  --color-text-muted: #94A3B8;
-  --color-text-label: #4A6490;
-  --color-brand-blue: #2D7EF8;
-  --color-brand-blue-hover: #1A6AE8;
+:root {
+  /* Dark mode theme tokens */
+  --bg-primary:    #0C0C0E;
+  --bg-secondary:  #141416;
+  --bg-tertiary:   #1C1C1F;
+  --border:        #2A2A2F;
+  --text-primary:  #EDEDEF;
+  --text-secondary:#8A8A9A;
+  --text-muted:    #4A4A5A;
+  --accent:        #5B6CF9;
+  --accent-hover:  #4A5BE8;
+  --success:       #22C55E;
+  --danger:        #EF4444;
+  --warning:       #F59E0B;
+}
+
+[data-theme="light"] {
+  /* Light mode theme tokens */
+  --bg-primary:    #FAFAFA;
+  --bg-secondary:  #FFFFFF;
+  --bg-tertiary:   #F4F4F5;
+  --border:        #E4E4E7;
+  --text-primary:  #09090B;
+  --text-secondary:#71717A;
+  --text-muted:    #A1A1AA;
+  --accent:        #5B6CF9;
+  --accent-hover:  #4A5BE8;
+  --success:       #16A34A;
+  --danger:        #DC2626;
+  --warning:       #D97706;
 }
 
 @layer base {
   body {
-    background-color: var(--color-bg-base);
-    color: var(--color-text-muted);
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    @apply antialiased;
+    background-color: var(--bg-primary);
+    color: var(--text-secondary);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    transition: background-color 0.2s ease, color 0.2s ease;
   }
-  
+
   code, pre, .font-mono {
-    font-family: 'JetBrains Mono', monospace;
+    font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', Courier, monospace !important;
+  }
+
+  a, button, input, select, textarea {
+    transition: all 0.15s ease;
   }
 }
 
-/* Custom scrollbars matching the background */
+/* Custom animations */
+
+/* Button left-to-right shimmer animation */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, var(--accent) 25%, var(--accent-hover) 50%, var(--accent) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite linear;
+}
+
+/* Active pipeline pulse animation */
+@keyframes activePulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(91, 108, 249, 0.5);
+  }
+  50% {
+    transform: scale(1.15);
+    box-shadow: 0 0 8px 3px rgba(91, 108, 249, 0.6);
+  }
+}
+
+.animate-active-pulse {
+  animation: activePulse 1.8s infinite ease-in-out;
+}
+
+/* Loading dots pulse one by one */
+@keyframes dotPulse {
+  0%, 100% {
+    opacity: 0.2;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
+.dot-1 {
+  animation: dotPulse 1.4s infinite ease-in-out;
+  animation-delay: 0s;
+}
+
+.dot-2 {
+  animation: dotPulse 1.4s infinite ease-in-out;
+  animation-delay: 0.2s;
+}
+
+.dot-3 {
+  animation: dotPulse 1.4s infinite ease-in-out;
+  animation-delay: 0.4s;
+}
+
+/* Custom Scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
+
 ::-webkit-scrollbar-track {
-  background: #0A0F1A;
+  background: var(--bg-primary);
 }
+
 ::-webkit-scrollbar-thumb {
-  background: #1E2D45;
+  background: var(--border);
+  border-radius: 4px;
 }
+
 ::-webkit-scrollbar-thumb:hover {
-  background: #2D7EF8;
-}
-
-/* Generate button loading sweep animation */
-@keyframes loadingSweep {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
-}
-
-.animate-sweep {
-  animation: loadingSweep 2s infinite linear;
-}
-
-/* Tooltip hover animations for the pipeline sidebar */
-.pipeline-tooltip {
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.15s ease-in-out;
-}
-
-.pipeline-node-container:hover .pipeline-tooltip {
-  opacity: 1;
-}
-
-/* Pulse animation for the active step */
-@keyframes pulseGlow {
-  0%, 100% {
-    transform: scale(1);
-    box-shadow: 0 0 0 0 rgba(45, 126, 248, 0.4);
-  }
-  50% {
-    transform: scale(1.25);
-    box-shadow: 0 0 8px 3px rgba(45, 126, 248, 0.6);
-  }
-}
-
-.animate-pulse-glow {
-  animation: pulseGlow 1.8s infinite ease-in-out;
+  background: var(--text-muted);
 }

@@ -1,91 +1,112 @@
 import React, { useState, useEffect } from 'react';
-import { Copy, Download, Check, GitBranch, AlertTriangle } from 'lucide-react';
 import Markdown from 'react-markdown';
-
-// Import demo configurations
 import { demoData, DEMO_MODE } from './demoData';
 
+/* === UTILITIES === */
+
+// Extracts owner/repo from GitHub URL for header display
+const getRepoDisplay = (url) => {
+  try {
+    const clean = url.trim().replace(/\/+$/, '');
+    const parts = clean.split('/');
+    if (parts.length >= 2) {
+      return `${parts[parts.length - 2]}/${parts[parts.length - 1]}`;
+    }
+    return url;
+  } catch {
+    return url;
+  }
+};
+
+// Extracts repo name for subtle background watermark
+const getRepoWatermark = (url) => {
+  try {
+    const clean = url.trim().replace(/\/+$/, '');
+    const parts = clean.split('/');
+    if (parts.length > 0) {
+      return parts[parts.length - 1].replace('.git', '');
+    }
+    return '';
+  } catch {
+    return '';
+  }
+};
+
 export default function App() {
-  // Input parameters
+  /* === STATE & EFFECTS === */
+  const [theme, setTheme] = useState('dark'); // 'dark' | 'light' | 'system'
   const [repoUrl, setRepoUrl] = useState('https://github.com/fastapi/fastapi');
   const [fromTag, setFromTag] = useState('0.100.0');
   const [toTag, setToTag] = useState('0.101.0');
 
-  // Application states
-  const [isLoading, setIsLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('changelog'); // 'changelog' | 'release-notes'
-  const [loadingStep, setLoadingStep] = useState(0); // 0: Fetch, 1: Analyze, 2: Generate, 3: Ready
+  const [pipelineStep, setPipelineStep] = useState(0); // 0 | 1 | 2 | 3
   const [copied, setCopied] = useState(false);
+  const [generationTime, setGenerationTime] = useState(0.0);
 
-  // Derive repo name for watermark (e.g. fastapi)
-  const getRepoName = (url) => {
-    try {
-      const clean = url.trim().replace(/\/+$/, '');
-      const parts = clean.split('/');
-      return parts.length > 0 ? parts[parts.length - 1].replace('.git', '') : '';
-    } catch {
-      return '';
-    }
-  };
-  const repoNameWatermark = getRepoName(repoUrl);
-
-  // Steps labels and status descriptors
-  const steps = [
-    { label: 'Fetch', desc: 'fetching commits from github...' },
-    { label: 'Analyze', desc: 'agent reasoning about changes...' },
-    { label: 'Generate', desc: 'writing technical changelog...' },
-    { label: 'Ready', desc: 'generating executive summary...' }
-  ];
-
-  // Simulated steps timing during loading state
+  // Sync theme with document attribute and handle system media query changes
   useEffect(() => {
-    let timer;
-    if (isLoading) {
-      setLoadingStep(0);
-      
-      const intervalTime = DEMO_MODE ? 900 : 1500;
-      
-      timer = setInterval(() => {
-        setLoadingStep((prev) => {
-          if (prev < 2) {
-            return prev + 1;
-          } else {
-            clearInterval(timer);
-            return prev;
-          }
-        });
-      }, intervalTime);
-    } else {
-      setLoadingStep(result ? 3 : 0);
-    }
-    return () => clearInterval(timer);
-  }, [isLoading, result]);
+    const applyTheme = () => {
+      let resolvedTheme = theme;
+      if (theme === 'system') {
+        resolvedTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      }
+      document.documentElement.setAttribute('data-theme', resolvedTheme);
+    };
 
-  // Main submission handler
+    applyTheme();
+
+    if (theme === 'system') {
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      const listener = (e) => {
+        document.documentElement.setAttribute('data-theme', e.matches ? 'dark' : 'light');
+      };
+      mediaQuery.addEventListener('change', listener);
+      return () => mediaQuery.removeEventListener('change', listener);
+    }
+  }, [theme]);
+
+  // Clean copied state timer
+  useEffect(() => {
+    if (copied) {
+      const timer = setTimeout(() => setCopied(false), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [copied]);
+
+  /* === HANDLERS === */
+
   const handleGenerate = async () => {
-    setIsLoading(true);
+    setLoading(true);
     setError(null);
     setResult(null);
+    setPipelineStep(0);
 
     const startTime = performance.now();
 
-    if (DEMO_MODE) {
-      // Offline mode: fake 3.6s delay
-      await new Promise((resolve) => setTimeout(resolve, 3600));
-      const endTime = performance.now();
-      const generationTime = ((endTime - startTime) / 1000).toFixed(1);
-      
-      setResult({
-        ...demoData,
-        generation_time: generationTime,
-        total_commits: 48,
-        was_capped: false,
-        pr_count: 8
+    // Trace status intervals simulation during request run
+    const stepInterval = setInterval(() => {
+      setPipelineStep((prev) => {
+        if (prev < 2) {
+          return prev + 1;
+        }
+        return prev;
       });
-      setLoadingStep(3);
-      setIsLoading(false);
+    }, 1000);
+
+    if (DEMO_MODE) {
+      // Fake 3.5s loading behavior in offline demo configuration
+      await new Promise((resolve) => setTimeout(resolve, 3500));
+      clearInterval(stepInterval);
+      setPipelineStep(3);
+      const endTime = performance.now();
+      const duration = ((endTime - startTime) / 1000).toFixed(1);
+      setGenerationTime(parseFloat(duration));
+      setResult(demoData);
+      setLoading(false);
     } else {
       try {
         const response = await fetch('http://localhost:8000/api/generate', {
@@ -95,10 +116,12 @@ export default function App() {
           },
           body: JSON.stringify({
             repo_url: repoUrl,
-            from_tag: fromTag,
-            to_tag: toTag,
+            from_tag: fromTag ? fromTag.trim() : null,
+            to_tag: toTag ? toTag.trim() : null,
           }),
         });
+
+        clearInterval(stepInterval);
 
         if (!response.ok) {
           const detail = await response.json();
@@ -106,37 +129,28 @@ export default function App() {
         }
 
         const data = await response.json();
+        setPipelineStep(3);
         const endTime = performance.now();
-        const generationTime = ((endTime - startTime) / 1000).toFixed(1);
-
-        setResult({
-          ...data,
-          generation_time: generationTime
-        });
-        setLoadingStep(3);
+        const duration = ((endTime - startTime) / 1000).toFixed(1);
+        setGenerationTime(parseFloat(duration));
+        setResult(data);
       } catch (err) {
-        console.error(err);
         setError(err.message || 'An unexpected error occurred during changelog generation.');
       } finally {
-        setIsLoading(false);
+        setLoading(false);
       }
     }
   };
 
-  // Copy to clipboard handler
   const handleCopy = () => {
     const textToCopy = activeTab === 'changelog' ? result?.technical_changelog : result?.executive_summary;
     if (!textToCopy) return;
 
     navigator.clipboard.writeText(textToCopy)
-      .then(() => {
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-      })
-      .catch((err) => console.error('Clipboard error:', err));
+      .then(() => setCopied(true))
+      .catch((err) => console.error('Clipboard copy failed:', err));
   };
 
-  // Download markdown file handler
   const handleDownload = () => {
     const textToDownload = activeTab === 'changelog' ? result?.technical_changelog : result?.executive_summary;
     if (!textToDownload) return;
@@ -150,338 +164,439 @@ export default function App() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
-  // Dot status colors for vertical pipeline
-  const getDotClass = (index) => {
-    if (isLoading) {
-      if (index < loadingStep) return 'bg-[#16A34A]'; // Completed steps turn Green
-      if (index === loadingStep) return 'bg-[#2D7EF8] animate-pulse-glow'; // Active pulses Blue
-      return 'bg-[#1E2D45]'; // Staged remains dark
+  // Helper mapping pipeline step index to circle class styles
+  const getPipelineCircleClass = (stepIndex) => {
+    if (loading) {
+      if (pipelineStep > stepIndex) {
+        return 'border-[var(--success)] bg-[var(--success)]';
+      }
+      if (pipelineStep === stepIndex) {
+        return 'border-[var(--accent)] bg-[var(--accent)] animate-active-pulse';
+      }
+      return 'border-[var(--border)] bg-transparent';
     }
-    if (result) return 'bg-[#16A34A]'; // All steps complete Green if successful
-    return 'bg-[#1E2D45]'; // Idle state
+    if (result) {
+      return 'border-[var(--success)] bg-[var(--success)]';
+    }
+    return 'border-[var(--border)] bg-transparent';
   };
+
+  // Helper checking if category list has populated contents
+  const hasResultCategories = result?.categories && 
+    Object.values(result.categories).some((arr) => Array.isArray(arr) && arr.length > 0);
 
   return (
-    <div className="min-h-screen bg-[#0A0F1A] text-[#94A3B8] flex flex-col font-sans antialiased select-none">
+    <div className="min-h-screen flex flex-col bg-[var(--bg-primary)] text-[var(--text-secondary)] select-none">
       
-      {/* 44px Minimal Header */}
-      <header className="h-11 bg-[#0A0F1A] border-b border-[#1E2D45] flex items-center justify-between px-6 z-20 shrink-0">
+      {/* === TOP BAR === */}
+      <header className="h-[52px] border-b border-[var(--border)] bg-[var(--bg-secondary)] flex items-center justify-between px-6 shrink-0">
         <div className="flex items-center gap-2">
-          <GitBranch className="w-3.5 h-3.5 text-[#2D7EF8]" />
-          <span className="font-mono text-xs font-bold tracking-[0.15em] text-white">gitnotes</span>
+          <span className="text-[var(--accent)] text-[16px] font-bold">◈</span>
+          <span className="text-[var(--text-primary)] font-semibold text-[15px] tracking-tight">GitNotes</span>
+          <span className="text-[var(--text-muted)] text-[11px] font-mono ml-2">v1.0</span>
         </div>
-        <div className="flex items-center gap-4 font-mono text-[10px] text-[#3D5278]">
-          <span>v1.0</span>
-          <span className="text-[#1E2D45]">•</span>
-          <a href="https://github.com/Vijajraj/Gitnotes" target="_blank" rel="noopener noreferrer" className="hover:text-white transition">docs</a>
+
+        {/* Theme select switch */}
+        <div className="flex items-center bg-[var(--bg-tertiary)] border border-[var(--border)] rounded-full p-[2px] select-none">
+          <button
+            onClick={() => setTheme('light')}
+            className={`w-[28px] h-[28px] flex items-center justify-center rounded-full text-xs font-semibold cursor-pointer transition-all duration-150 ${theme === 'light' ? 'bg-[var(--accent)] text-white shadow-sm' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'}`}
+            title="Light Mode (☀)"
+          >
+            ☀
+          </button>
+          <button
+            onClick={() => setTheme('system')}
+            className={`w-[28px] h-[28px] flex items-center justify-center rounded-full text-xs font-semibold cursor-pointer transition-all duration-150 ${theme === 'system' ? 'bg-[var(--accent)] text-white shadow-sm' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'}`}
+            title="System Sync (◑)"
+          >
+            ◑
+          </button>
+          <button
+            onClick={() => setTheme('dark')}
+            className={`w-[28px] h-[28px] flex items-center justify-center rounded-full text-xs font-semibold cursor-pointer transition-all duration-150 ${theme === 'dark' ? 'bg-[var(--accent)] text-white shadow-sm' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'}`}
+            title="Dark Mode (☾)"
+          >
+            ☾
+          </button>
         </div>
       </header>
 
-      {/* Main Grid Wrapper */}
-      <div className="flex-1 flex overflow-hidden">
+      {/* === WORKSPACE SPLIT === */}
+      <div className="flex flex-1 overflow-hidden">
         
-        {/* Left Sidebar - Pipeline Trace (48px wide) */}
-        <aside className="w-12 bg-[#0A0F1A] border-r border-[#1E2D45] flex flex-col items-center py-10 gap-8 relative z-25 shrink-0">
-          <div className="absolute top-10 bottom-10 w-[1px] bg-[#1E2D45] -z-10" />
+        {/* === LEFT SIDEBAR === */}
+        <aside className="w-[320px] bg-[var(--bg-secondary)] border-r border-[var(--border)] flex flex-col p-6 overflow-y-auto shrink-0 select-text">
           
-          {steps.map((step, idx) => (
-            <div key={idx} className="pipeline-node-container relative flex items-center justify-center cursor-help">
-              {/* Tooltip */}
-              <div className="pipeline-tooltip absolute left-8 bg-[#0D1420] border border-[#1E2D45] font-mono text-[10px] text-white px-2 py-0.5 tracking-wider rounded uppercase z-50">
-                {step.label}
-              </div>
-              
-              {/* Dot */}
-              <div className={`w-2 h-2 rounded-full transition-all duration-300 ${getDotClass(idx)}`} />
-            </div>
-          ))}
-        </aside>
+          {/* Section: SOURCE CONFIGURATION */}
+          <div className="mb-6">
+            <h2 className="font-mono text-[10px] font-bold tracking-[0.1em] text-[var(--text-muted)] uppercase mb-1">
+              SOURCE CONFIGURATION
+            </h2>
+            <p className="text-[11px] text-[var(--text-secondary)] leading-relaxed">
+              Connect a repository to analyze commits and generate release documentation
+            </p>
+            <div className="h-[1px] bg-[var(--border)] mt-4"></div>
+          </div>
 
-        {/* Configurations & Workspace Layout */}
-        <main className="flex-1 flex flex-col md:flex-row overflow-hidden relative">
-          
-          {/* Left Inputs Pane */}
-          <section className="w-full md:w-[320px] p-6 border-b md:border-b-0 md:border-r border-[#1E2D45] flex flex-col gap-6 overflow-y-auto shrink-0 z-10">
-            <div>
-              <h2 className="font-mono text-[10px] font-bold text-[#4A6490] tracking-[0.1em] uppercase mb-1">Source configuration</h2>
-              <p className="text-[11px] text-[#3D5278] leading-relaxed">
-                Connect to a repository to build release change lists.
-              </p>
+          {/* Configuration Inputs */}
+          <div className="space-y-4">
+            
+            {/* Repository URL Input */}
+            <div className="flex flex-col gap-1.5">
+              <label className="font-mono text-[10px] tracking-wider text-[var(--text-muted)] uppercase">
+                Repository URL
+              </label>
+              <input
+                type="text"
+                value={repoUrl}
+                onChange={(e) => setRepoUrl(e.target.value)}
+                placeholder="https://github.com/owner/repo"
+                disabled={loading}
+                className="w-full h-9 bg-[var(--bg-tertiary)] border border-[var(--border)] rounded-md px-3 font-mono text-[13px] text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)] focus:ring-[3px] focus:ring-[rgba(91,108,249,0.15)] transition duration-150 disabled:opacity-50"
+              />
             </div>
 
-            <div className="space-y-5">
-              {/* Repo URL Input */}
-              <div className="space-y-1">
-                <label className="block font-mono text-[10px] font-semibold text-[#4A6490] uppercase tracking-wider">
-                  Repository URL
+            {/* Tag Inputs */}
+            <div className="grid grid-cols-2 gap-2">
+              <div className="flex flex-col gap-1.5">
+                <label className="font-mono text-[10px] tracking-wider text-[var(--text-muted)] uppercase">
+                  FROM TAG
                 </label>
                 <input
                   type="text"
-                  value={repoUrl}
-                  onChange={(e) => setRepoUrl(e.target.value)}
-                  placeholder="https://github.com/owner/repo"
-                  disabled={isLoading}
-                  className="w-full bg-transparent border-b border-[#1E2D45] focus:border-[#2D7EF8] focus:outline-none py-1.5 text-white text-xs placeholder-[#3D5278] transition duration-150"
+                  value={fromTag}
+                  onChange={(e) => setFromTag(e.target.value)}
+                  placeholder="0.100.0"
+                  disabled={loading}
+                  className="w-full h-9 bg-[var(--bg-tertiary)] border border-[var(--border)] rounded-md px-3 font-mono text-[13px] text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)] focus:ring-[3px] focus:ring-[rgba(91,108,249,0.15)] transition duration-150 disabled:opacity-50"
                 />
               </div>
-
-              {/* Tags Inputs */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="block font-mono text-[10px] font-semibold text-[#4A6490] uppercase tracking-wider">
-                    From Tag <span className="text-[9px] text-[#3D5278] lowercase font-normal">(optional)</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={fromTag}
-                    onChange={(e) => setFromTag(e.target.value)}
-                    placeholder="0.100.0"
-                    disabled={isLoading}
-                    className="w-full bg-transparent border-b border-[#1E2D45] focus:border-[#2D7EF8] focus:outline-none py-1.5 text-white text-xs placeholder-[#3D5278] transition duration-150"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="block font-mono text-[10px] font-semibold text-[#4A6490] uppercase tracking-wider">
-                    To Tag <span className="text-[9px] text-[#3D5278] lowercase font-normal">(optional)</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={toTag}
-                    onChange={(e) => setToTag(e.target.value)}
-                    placeholder="0.101.0"
-                    disabled={isLoading}
-                    className="w-full bg-transparent border-b border-[#1E2D45] focus:border-[#2D7EF8] focus:outline-none py-1.5 text-white text-xs placeholder-[#3D5278] transition duration-150"
-                  />
-                </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="font-mono text-[10px] tracking-wider text-[var(--text-muted)] uppercase">
+                  TO TAG
+                </label>
+                <input
+                  type="text"
+                  value={toTag}
+                  onChange={(e) => setToTag(e.target.value)}
+                  placeholder="0.101.0"
+                  disabled={loading}
+                  className="w-full h-9 bg-[var(--bg-tertiary)] border border-[var(--border)] rounded-md px-3 font-mono text-[13px] text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)] focus:ring-[3px] focus:ring-[rgba(91,108,249,0.15)] transition duration-150 disabled:opacity-50"
+                />
               </div>
-
-              {/* Generate Button */}
-              <div className="relative overflow-hidden pt-2">
-                <button
-                  onClick={handleGenerate}
-                  disabled={isLoading || !repoUrl.trim()}
-                  className="w-full h-11 bg-[#2D7EF8] hover:bg-[#1A6AE8] text-white text-xs font-semibold tracking-wide transition duration-150 disabled:opacity-40 disabled:pointer-events-none active:scale-[0.98] select-none relative overflow-hidden"
-                >
-                  {isLoading ? 'Processing Pipeline...' : 'Generate Release Notes'}
-                  {/* Loading Sweep overlay */}
-                  {isLoading && (
-                    <div className="absolute inset-0 bg-white/10 -translate-x-full animate-sweep" />
-                  )}
-                </button>
-                {/* Thin loading progress bar */}
-                {isLoading && (
-                  <div className="h-[2px] bg-[#2D7EF8] w-full absolute bottom-0 left-0 animate-pulse" />
-                )}
-              </div>
-
-              {/* Real-time Status Log */}
-              {isLoading && (
-                <div className="font-mono text-[11px] text-[#3D5278] leading-relaxed flex items-center gap-2 mt-1">
-                  <span>❯</span>
-                  <span className="animate-pulse">{steps[loadingStep].desc}</span>
-                </div>
-              )}
             </div>
 
-            {/* Ingress cap notice */}
+            {/* Submit Action Button */}
+            <button
+              onClick={handleGenerate}
+              disabled={loading || !repoUrl.trim()}
+              className={`w-full h-9 rounded-md text-[13px] font-medium tracking-wide text-white select-none transition-all duration-150 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${loading ? 'animate-shimmer' : 'bg-[var(--accent)] hover:bg-[var(--accent-hover)]'}`}
+            >
+              {loading ? 'Generating...' : 'Generate Release Notes'}
+            </button>
+
+            {/* Ingress cap alert (for large live repository requests) */}
             {result && result.was_capped && (
-              <div className="font-mono text-[10px] text-amber-500 bg-amber-955/5 border border-amber-900/30 p-2.5 mt-auto">
-                ⚠️ Analyzing latest 30 commits only to prevent context limits.
+              <div className="border border-[var(--warning)] bg-[rgba(245,158,11,0.05)] rounded p-3 text-[11px] text-[var(--warning)] font-mono">
+                ⚠️ Capped ingestion to the latest 30 commits to bypass limits.
               </div>
             )}
-          </section>
 
-          {/* Right Workspace Pane */}
-          <section className="flex-1 flex flex-col p-6 overflow-y-auto z-10 gap-6">
-            
-            {/* Error State Banner */}
-            {error && (
-              <div className="border-t border-[#DC2626] border-l-3 border-l-[#DC2626] bg-[#0F0A0A] p-4 flex flex-col gap-2 shrink-0">
-                <span className="font-mono text-[11px] font-bold text-[#F87171] uppercase tracking-wider flex items-center gap-1.5">
-                  <AlertTriangle className="w-3.5 h-3.5" /> Pipeline Failure
+            {/* Section: PIPELINE TRACE */}
+            <div className="pt-4 border-t border-[var(--border)] select-none">
+              <h3 className="font-mono text-[10px] font-bold tracking-[0.15em] text-[var(--text-muted)] uppercase mb-4">
+                PIPELINE
+              </h3>
+
+              <div className="relative pl-1 space-y-0">
+                {/* Step 0: Fetch */}
+                <div className="flex items-center gap-3">
+                  <div className={`w-[8px] h-[8px] rounded-full border-[1.5px] transition-all duration-300 ${getPipelineCircleClass(0)}`} />
+                  <span className={`text-[12px] ${loading && pipelineStep === 0 ? 'text-[var(--text-primary)] font-medium' : 'text-[var(--text-secondary)]'}`}>
+                    Fetch commits
+                  </span>
+                </div>
+                <div className="w-[1px] h-[20px] border-l border-dashed border-[var(--border)] ml-[3.5px] my-1" />
+
+                {/* Step 1: Analyze */}
+                <div className="flex items-center gap-3">
+                  <div className={`w-[8px] h-[8px] rounded-full border-[1.5px] transition-all duration-300 ${getPipelineCircleClass(1)}`} />
+                  <span className={`text-[12px] ${loading && pipelineStep === 1 ? 'text-[var(--text-primary)] font-medium' : 'text-[var(--text-secondary)]'}`}>
+                    Analyze changes
+                  </span>
+                </div>
+                <div className="w-[1px] h-[20px] border-l border-dashed border-[var(--border)] ml-[3.5px] my-1" />
+
+                {/* Step 2: Generate */}
+                <div className="flex items-center gap-3">
+                  <div className={`w-[8px] h-[8px] rounded-full border-[1.5px] transition-all duration-300 ${getPipelineCircleClass(2)}`} />
+                  <span className={`text-[12px] ${loading && pipelineStep === 2 ? 'text-[var(--text-primary)] font-medium' : 'text-[var(--text-secondary)]'}`}>
+                    Generate docs
+                  </span>
+                </div>
+                <div className="w-[1px] h-[20px] border-l border-dashed border-[var(--border)] ml-[3.5px] my-1" />
+
+                {/* Step 3: Complete */}
+                <div className="flex items-center gap-3">
+                  <div className={`w-[8px] h-[8px] rounded-full border-[1.5px] transition-all duration-300 ${getPipelineCircleClass(3)}`} />
+                  <span className={`text-[12px] ${result && !loading ? 'text-[var(--text-primary)] font-medium' : 'text-[var(--text-secondary)]'}`}>
+                    Complete
+                  </span>
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+        </aside>
+
+        {/* === RIGHT PANEL === */}
+        <main className="flex-1 bg-[var(--bg-primary)] p-8 overflow-y-auto flex flex-col select-text relative">
+          
+          {/* Watermark Logo Label in Background */}
+          {!loading && result && getRepoWatermark(repoUrl) && (
+            <div className="absolute bottom-6 right-6 font-mono text-[90px] font-black text-[var(--bg-secondary)] leading-none tracking-tighter uppercase select-none pointer-events-none opacity-40 z-0">
+              {getRepoWatermark(repoUrl)}
+            </div>
+          )}
+
+          {/* ERROR STATUS BANNER */}
+          {error && (
+            <div className="border border-[var(--danger)] bg-[rgba(239,68,68,0.04)] rounded-lg p-4 mb-6 flex items-center justify-between shrink-0 z-10">
+              <div className="flex flex-col">
+                <span className="font-mono text-xs font-bold text-[var(--danger)] uppercase tracking-wider flex items-center gap-1.5">
+                  ⚠️ Pipeline Failure
                 </span>
-                <span className="text-xs text-[#F87171]">{error}</span>
-                <button
-                  onClick={() => setError(null)}
-                  className="w-20 mt-2 bg-red-950/30 border border-red-900/50 hover:bg-red-950/60 text-[#F87171] font-mono text-[10px] py-1 transition"
-                >
-                  Dismiss
-                </button>
+                <span className="text-xs text-[var(--text-secondary)] mt-1">{error}</span>
               </div>
-            )}
+              <button
+                onClick={() => setError(null)}
+                className="text-xs font-mono text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-[var(--border)] rounded px-2.5 py-1 bg-[var(--bg-tertiary)] hover:border-[var(--text-secondary)] transition cursor-pointer"
+              >
+                Dismiss
+              </button>
+            </div>
+          )}
 
-            {/* Output Workspace */}
-            {result && !isLoading && (
-              <div className="flex-1 flex flex-col gap-5">
-                
-                {/* Tabs switcher header */}
-                <div className="flex items-center justify-between border-b border-[#1E2D45] pb-px shrink-0">
-                  <div className="flex gap-8">
-                    <button
-                      onClick={() => setActiveTab('changelog')}
-                      className={`font-mono text-[11px] font-bold tracking-[0.15em] pb-3 border-b transition ${
-                        activeTab === 'changelog' 
-                          ? 'text-white border-[#2D7EF8]' 
-                          : 'text-[#3D5278] border-transparent hover:text-zinc-300'
-                      }`}
-                    >
-                      CHANGELOG
-                    </button>
-                    <button
-                      onClick={() => setActiveTab('release-notes')}
-                      className={`font-mono text-[11px] font-bold tracking-[0.15em] pb-3 border-b transition ${
-                        activeTab === 'release-notes' 
-                          ? 'text-white border-[#2D7EF8]' 
-                          : 'text-[#3D5278] border-transparent hover:text-zinc-300'
-                      }`}
-                    >
-                      RELEASE NOTES
-                    </button>
-                  </div>
+          {/* IDLE STATE */}
+          {!loading && !result && (
+            <div className="flex-1 flex flex-col items-center justify-center text-center select-none z-10">
+              <span className="text-[var(--border)] text-[48px] font-bold leading-none mb-3">◈</span>
+              <h3 className="text-[var(--text-primary)] text-sm font-semibold mb-1">
+                No release notes generated
+              </h3>
+              <p className="text-[var(--text-secondary)] text-[12px] max-w-[280px]">
+                Enter a repository URL and version tags to get started
+              </p>
+            </div>
+          )}
 
-                  {/* Actions buttons */}
-                  <div className="flex items-center gap-2 mb-2">
-                    <button
-                      onClick={handleCopy}
-                      className={`h-7 px-3 border font-mono text-[10px] tracking-wide flex items-center gap-1.5 transition rounded-[2px] ${
-                        copied 
-                          ? 'border-emerald-700 bg-emerald-950/20 text-emerald-400' 
-                          : 'border-[#3D5278] hover:border-zinc-400 text-[#94A3B8]'
-                      }`}
-                    >
-                      {copied ? (
-                        <>
-                          <Check className="w-3 h-3 text-emerald-400" />
-                          <span>copied</span>
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="w-3 h-3" />
-                          <span>copy</span>
-                        </>
-                      )}
-                    </button>
-                    <button
-                      onClick={handleDownload}
-                      className="h-7 px-3 bg-[#1E2D45] hover:bg-[#2a3e5c] text-white font-mono text-[10px] tracking-wide flex items-center gap-1.5 transition rounded-[2px]"
-                    >
-                      <Download className="w-3 h-3" />
-                      <span>download</span>
-                    </button>
-                  </div>
+          {/* LOADING STATE */}
+          {loading && (
+            <div className="flex-1 flex flex-col items-center justify-center text-center select-none z-10">
+              <div className="flex gap-1.5 text-[var(--text-muted)] text-[32px] font-bold mb-3">
+                <span className="dot-1">.</span>
+                <span className="dot-2">.</span>
+                <span className="dot-3">.</span>
+              </div>
+              <span className="font-mono text-xs text-[var(--accent)] uppercase tracking-widest font-semibold">
+                {pipelineStep === 0 && 'fetching commits...'}
+                {pipelineStep === 1 && 'analyzing commits...'}
+                {pipelineStep === 2 && 'generating release notes...'}
+                {pipelineStep === 3 && 'finalizing format...'}
+              </span>
+            </div>
+          )}
+
+          {/* OUTPUT RESULT STATE */}
+          {!loading && result && (
+            <div className="flex-1 flex flex-col z-10">
+              
+              {/* TOP HEADER ROW */}
+              <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-[var(--border)] pb-4 gap-4 shrink-0">
+                <div className="flex flex-col">
+                  <span className="font-bold text-[15px] text-[var(--text-primary)]">
+                    {getRepoDisplay(repoUrl)}
+                  </span>
+                  <span className="font-mono text-[12px] text-[var(--text-secondary)] mt-0.5">
+                    {fromTag ? fromTag : 'Latest'} → {toTag ? toTag : 'Latest'}
+                  </span>
                 </div>
 
-                {/* Metadata stats details */}
-                <div className="flex flex-wrap items-center gap-2 font-mono text-[10px] text-[#3D5278] shrink-0">
-                  <span>{result.total_commits} commits</span>
-                  <span>·</span>
-                  <span>{result.pr_count} PRs</span>
-                  <span>·</span>
-                  <span>{Object.values(result.categories || {}).flat().length} items</span>
-                  <span>·</span>
-                  <span>{result.generation_time}s</span>
+                {/* Metadata stats pills */}
+                <div className="flex items-center gap-2 select-none">
+                  <span className="bg-[var(--bg-tertiary)] border border-[var(--border)] rounded px-2 py-0.5 text-[11px] font-mono text-[var(--text-secondary)]">
+                    {result.total_commits || 0} commits
+                  </span>
+                  <span className="bg-[var(--bg-tertiary)] border border-[var(--border)] rounded px-2 py-0.5 text-[11px] font-mono text-[var(--text-secondary)]">
+                    {result.pr_count || 0} PRs
+                  </span>
+                  <span className="bg-[var(--bg-tertiary)] border border-[var(--border)] rounded px-2 py-0.5 text-[11px] font-mono text-[var(--text-secondary)]">
+                    {generationTime}s
+                  </span>
                 </div>
+              </div>
 
-                {/* Custom Category breakdown pills */}
-                <div className="flex flex-wrap gap-2 shrink-0">
+              {/* BREAKING CHANGES WARNING ALERT */}
+              {result.breaking_detected && (
+                <div className="w-full bg-[rgba(239,68,68,0.08)] border-l-[3px] border-[var(--danger)] rounded-r-md px-3.5 py-2.5 mt-4 flex items-center gap-2 shrink-0">
+                  <span className="text-[var(--danger)] text-sm font-semibold select-none">⚠</span>
+                  <span className="text-[13px] text-[var(--danger)] font-medium">
+                    Breaking changes detected — review before upgrading
+                  </span>
+                </div>
+              )}
+
+              {/* CATEGORY SUMMARY PILLS ROW */}
+              {hasResultCategories && (
+                <div className="flex flex-wrap gap-2 mt-4 shrink-0 select-none">
                   {result.categories?.breaking?.length > 0 && (
-                    <span className="font-mono text-[10px] px-2 py-0.5 border border-[#DC2626] text-[#DC2626]">
-                      ⚠ {result.categories.breaking.length} breaking
+                    <span className="border border-[var(--danger)] text-[var(--danger)] rounded-full px-2.5 py-0.5 text-[10px] font-mono uppercase tracking-wider">
+                      {result.categories.breaking.length} Breaking
                     </span>
                   )}
                   {result.categories?.features?.length > 0 && (
-                    <span className="font-mono text-[10px] px-2 py-0.5 border border-[#16A34A] text-[#16A34A]">
-                      ✨ {result.categories.features.length} features
+                    <span className="border border-[var(--success)] text-[var(--success)] rounded-full px-2.5 py-0.5 text-[10px] font-mono uppercase tracking-wider">
+                      {result.categories.features.length} Features
                     </span>
                   )}
                   {result.categories?.fixes?.length > 0 && (
-                    <span className="font-mono text-[10px] px-2 py-0.5 border border-[#2D7EF8] text-[#2D7EF8]">
-                      🐛 {result.categories.fixes.length} fixes
+                    <span className="border border-[var(--accent)] text-[var(--accent)] rounded-full px-2.5 py-0.5 text-[10px] font-mono uppercase tracking-wider">
+                      {result.categories.fixes.length} Fixes
                     </span>
                   )}
                   {result.categories?.performance?.length > 0 && (
-                    <span className="font-mono text-[10px] px-2 py-0.5 border border-[#D97706] text-[#D97706]">
-                      ⚡ {result.categories.performance.length} performance
+                    <span className="border border-[var(--warning)] text-[var(--warning)] rounded-full px-2.5 py-0.5 text-[10px] font-mono uppercase tracking-wider">
+                      {result.categories.performance.length} Performance
                     </span>
                   )}
                   {result.categories?.chores?.length > 0 && (
-                    <span className="font-mono text-[10px] px-2 py-0.5 border border-[#3D5278] text-[#3D5278]">
-                      🔧 {result.categories.chores.length} chores
+                    <span className="border border-[var(--text-muted)] text-[var(--text-muted)] rounded-full px-2.5 py-0.5 text-[10px] font-mono uppercase tracking-wider">
+                      {result.categories.chores.length} Chores
                     </span>
                   )}
                 </div>
+              )}
 
-                {/* Breaking changes alert layout */}
-                {result.breaking_detected && (
-                  <div className="border-t border-[#DC2626] border-l-3 border-l-[#DC2626] bg-[#0F0A0A] p-4 shrink-0">
-                    <span className="font-mono text-[11px] font-bold text-[#F87171] uppercase tracking-wider">
-                      ⚠ BREAKING CHANGES DETECTED IN THIS RELEASE
+              {/* TABS & COPIES ACTIONS HEADER */}
+              <div className="flex items-center justify-between border-b border-[var(--border)] mt-6 pb-px shrink-0 select-none">
+                <div className="flex gap-6">
+                  <button
+                    onClick={() => setActiveTab('changelog')}
+                    className={`text-[13px] font-medium pb-2 border-b-2 transition cursor-pointer ${activeTab === 'changelog' ? 'text-[var(--text-primary)] border-[var(--accent)]' : 'text-[var(--text-secondary)] border-transparent hover:text-[var(--text-primary)]'}`}
+                  >
+                    Changelog
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('release-notes')}
+                    className={`text-[13px] font-medium pb-2 border-b-2 transition cursor-pointer ${activeTab === 'release-notes' ? 'text-[var(--text-primary)] border-[var(--accent)]' : 'text-[var(--text-secondary)] border-transparent hover:text-[var(--text-primary)]'}`}
+                  >
+                    Release Notes
+                  </button>
+                </div>
+
+                {/* Tab actions buttons */}
+                <div className="flex items-center gap-2 mb-2">
+                  <button
+                    onClick={handleCopy}
+                    className={`h-7 px-3 flex items-center justify-center font-mono text-[12px] bg-[var(--bg-tertiary)] border border-[var(--border)] rounded-[5px] cursor-pointer transition select-none ${copied ? 'text-[var(--success)] border-[var(--success)]' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--text-secondary)]'}`}
+                  >
+                    {copied ? (
+                      <span className="flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                        ✓ Copied
+                      </span>
+                    ) : (
+                      <span className="flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                        </svg>
+                        Copy
+                      </span>
+                    )}
+                  </button>
+                  <button
+                    onClick={handleDownload}
+                    className="h-7 px-3 flex items-center justify-center font-mono text-[12px] bg-[var(--bg-tertiary)] border border-[var(--border)] rounded-[5px] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--text-secondary)] cursor-pointer transition select-none"
+                  >
+                    <span className="flex items-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                      </svg>
+                      Download
+                    </span>
+                  </button>
+                </div>
+              </div>
+
+              {/* OUTPUT CONTAINER AREA */}
+              <div className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg p-6 mt-4 relative">
+                
+                {/* Empty check */}
+                {!hasResultCategories && (
+                  <div className="flex items-center justify-center py-10 select-none">
+                    <span className="font-mono text-[12px] text-[var(--text-muted)] uppercase tracking-wider text-center">
+                      no significant changes between these versions
                     </span>
                   </div>
                 )}
 
-                {/* Markdown Viewport Area */}
-                <div className="flex-1 bg-[#0D1420] border border-[#1E2D45] p-8 relative overflow-y-auto">
-                  {/* Repo Watermark */}
-                  {repoNameWatermark && (
-                    <div className="absolute bottom-4 right-4 font-mono text-[120px] font-black text-[#0F1A2E] leading-none pointer-events-none select-none z-0">
-                      {repoNameWatermark.toLowerCase()}
-                    </div>
-                  )}
-
-                  {/* Render Markdown */}
-                  <div className="relative z-10 prose prose-invert max-w-none">
+                {/* Render markdown documentation */}
+                {hasResultCategories && (
+                  <div className="prose max-w-none">
                     <Markdown
                       components={{
                         h2: ({ node, ...props }) => (
-                          <h2 className="text-[14px] font-bold uppercase tracking-[0.08em] text-white border-b border-[#1E2D45] pb-2 mb-4 mt-6" {...props} />
+                          <h2 className="text-[13px] font-mono uppercase tracking-wider text-[var(--text-muted)] border-b border-[var(--border)] pb-2 mt-6 mb-3" {...props} />
                         ),
                         h3: ({ node, ...props }) => (
-                          <h3 className="text-[13px] font-semibold text-[#2D7EF8] mt-5 mb-2" {...props} />
+                          <h3 className="text-[13px] font-semibold text-[var(--accent)] mt-4 mb-2" {...props} />
                         ),
                         p: ({ node, ...props }) => (
-                          <p className="text-[13px] text-[#94A3B8] leading-[1.6] mb-3" {...props} />
+                          <p className="text-[13px] text-[var(--text-secondary)] leading-[1.6] mb-3" {...props} />
                         ),
                         ul: ({ node, ...props }) => (
-                          <ul className="list-disc pl-5 space-y-1.5 mb-4" {...props} />
+                          <ul className="list-disc pl-5 mb-4 space-y-1.5" {...props} />
+                        ),
+                        ol: ({ node, ...props }) => (
+                          <ol className="list-decimal pl-5 mb-4 space-y-1.5" {...props} />
                         ),
                         li: ({ node, ...props }) => (
-                          <li className="text-[14px] text-[#94A3B8] leading-[1.7]" {...props} />
+                          <li className="text-[13px] text-[var(--text-secondary)] leading-[1.8]" {...props} />
                         ),
                         strong: ({ node, ...props }) => (
-                          <strong className="text-white font-semibold" {...props} />
+                          <strong className="text-[var(--text-primary)] font-semibold" {...props} />
                         ),
-                        hr: ({ node, ...props }) => (
-                          <hr className="border-[#1E2D45] my-5" {...props} />
+                        code: ({ node, ...props }) => (
+                          <code className="font-mono bg-[var(--bg-tertiary)] text-[var(--text-primary)] rounded-[3px] px-[5px] py-[1px] text-[12px]" {...props} />
                         ),
                         blockquote: ({ node, ...props }) => (
-                          <blockquote className="border-l-2 border-[#2D7EF8] pl-4 italic text-[#3D5278] my-3" {...props} />
+                          <blockquote className="border-l-2 border-[var(--accent)] pl-4 italic text-[var(--text-muted)] my-3" {...props} />
                         )
                       }}
                     >
                       {activeTab === 'changelog' ? result.technical_changelog : result.executive_summary}
                     </Markdown>
                   </div>
-                </div>
+                )}
 
               </div>
-            )}
 
-            {/* Empty State / Idle display */}
-            {!result && !isLoading && !error && (
-              <div className="flex-1 border border-dashed border-[#1E2D45] flex items-center justify-center min-h-[400px]">
-                <span className="font-mono text-xs text-[#3D5278] tracking-wide uppercase select-none">
-                  no significant changes found between these versions
-                </span>
-              </div>
-            )}
-            
-          </section>
+            </div>
+          )}
+
         </main>
       </div>
-      
+
     </div>
   );
 }
