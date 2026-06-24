@@ -9,7 +9,7 @@ from langchain_groq import ChatGroq
 from langgraph.graph import StateGraph, START, END
 
 # Load environment variables
-load_dotenv()
+load_dotenv(override=True)
 
 # Print LangSmith Configuration status for visibility
 if os.getenv("LANGCHAIN_TRACING_V2") == "true":

@@ -9,7 +9,7 @@ from github_service import fetch_changes
 from groq_service import generate_changelog_agent
 
 # Load environment variables
-load_dotenv()
+load_dotenv(override=True)
 
 app = FastAPI(
     title="GitNotes API",
