@@ -267,8 +267,9 @@ export default function App() {
             {/* Tag Inputs */}
             <div className="grid grid-cols-2 gap-2">
               <div className="flex flex-col gap-1.5">
-                <label className="font-mono text-[10px] tracking-wider text-[var(--text-muted)] uppercase">
-                  FROM TAG
+                <label className="font-mono text-[10px] tracking-wider text-[var(--text-muted)] uppercase flex items-center justify-between">
+                  <span>FROM TAG</span>
+                  <span className="text-[9px] text-[var(--text-muted)] lowercase font-normal font-sans">(optional)</span>
                 </label>
                 <input
                   type="text"
@@ -280,8 +281,9 @@ export default function App() {
                 />
               </div>
               <div className="flex flex-col gap-1.5">
-                <label className="font-mono text-[10px] tracking-wider text-[var(--text-muted)] uppercase">
-                  TO TAG
+                <label className="font-mono text-[10px] tracking-wider text-[var(--text-muted)] uppercase flex items-center justify-between">
+                  <span>TO TAG</span>
+                  <span className="text-[9px] text-[var(--text-muted)] lowercase font-normal font-sans">(optional)</span>
                 </label>
                 <input
                   type="text"
