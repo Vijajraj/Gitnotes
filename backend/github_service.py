@@ -136,8 +136,8 @@ async def fetch_changes(repo_url: str, from_tag: str, to_tag: str) -> Dict[str, 
         # Extract unique PR count from the commits
         unique_prs = set()
         
-        # Capping at 50 commits to prevent context token overflow and rate limits
-        for c in commits_data[-50:]:
+        # Capping at 30 commits to prevent context token overflow and rate limits
+        for c in commits_data[-30:]:
             commit_info = c.get("commit", {})
             message = commit_info.get("message", "")
             subject = message.split("\n")[0].strip() if message else ""
@@ -187,6 +187,6 @@ async def fetch_changes(repo_url: str, from_tag: str, to_tag: str) -> Dict[str, 
         return {
             "commits": normalized_commits,
             "total_commits": total_commits,
-            "was_capped": total_commits > 50,
+            "was_capped": total_commits > 30,
             "pr_count": len(unique_prs)
         }

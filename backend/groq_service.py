@@ -70,7 +70,7 @@ def generate_changelog_node(state: AgentState) -> Dict[str, Any]:
         if c.get('message') and len(c['message']) > len(c['subject']):
             body = c['message'][len(c['subject']):].strip()
             if body:
-                commits_text += f"  Details/Description: {body[:150]}...\n"
+                commits_text += f"  Details/Description: {body[:80]}...\n"
                 
     user_prompt = f"""Analyze the following list of commits and merged Pull Requests (PRs) to generate a structured release document.
 
