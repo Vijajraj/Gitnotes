@@ -91,10 +91,10 @@ You MUST return a JSON object with exactly the following structure:
         
         # Create chat completion
         response = client.chat.completions.create(
-            model="llama-3.1-8b-instant",
+            model="llama-3.3-70b-versatile",
             messages=messages,
             temperature=0.2,
-            max_tokens=6000,
+            max_tokens=3500,
             response_format={"type": "json_object"}
         )
         
