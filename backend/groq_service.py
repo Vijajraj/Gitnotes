@@ -56,19 +56,29 @@ def generate_changelog_node(state: AgentState) -> Dict[str, Any]:
     commits = state.commits
     feedback = state.critic_feedback
     
-    # Format commits for prompt
+    # Format commits for prompt with PR-first priority
     commits_text = ""
     for c in commits:
         pr_str = f" (PR #{c['pr_number']})" if c.get('pr_number') else ""
-        commits_text += f"- [{c['sha']}] by {c['author']}: {c['subject']}{pr_str}\n"
+        
+        # PR-first choice for title/subject
+        title = c.get('pr_title') or c.get('subject', '')
+        is_pr_explicit = bool(c.get('pr_title'))
+        pr_label = "[PR Title] " if is_pr_explicit else "[Commit] "
+        
+        commits_text += f"- [{c['sha']}] {pr_label}{title}{pr_str} by {c['author']}\n"
         if c.get('message') and len(c['message']) > len(c['subject']):
             body = c['message'][len(c['subject']):].strip()
             if body:
-                commits_text += f"  Details: {body[:120]}...\n"
+                commits_text += f"  Details/Description: {body[:150]}...\n"
                 
-    user_prompt = f"""Analyze the following list of commits and generate a structured release document:
+    user_prompt = f"""Analyze the following list of commits and merged Pull Requests (PRs) to generate a structured release document.
 
-Commits:
+PR-First Ingestion Rule:
+- When a change has a PR title explicitly provided, it takes precedence over raw git commit messages as PR titles are more descriptive and intentional.
+- Weight PR descriptions and merge details more heavily in the output changelog categories and summaries.
+
+Commits and PRs:
 {commits_text}
 
 You MUST return a JSON object with exactly the following structure:

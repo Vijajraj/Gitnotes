@@ -36,11 +36,22 @@ async def generate_notes(request: ChangelogRequest):
     try:
         # Step 1: Ingest commits from GitHub
         print(f"Fetching changes for {request.repo_url} between {request.from_tag} and {request.to_tag}...")
-        commits = await fetch_changes(request.repo_url, request.from_tag, request.to_tag)
+        changes_data = await fetch_changes(request.repo_url, request.from_tag, request.to_tag)
+        commits = changes_data["commits"]
         
         # Step 2: Generate notes using Groq LLaMA via LangGraph Agentic Critic Loop
         print(f"Generating changelog for {len(commits)} commits using LangGraph Agentic Critic Loop...")
         result = await generate_changelog_agent(commits, request.to_tag)
+        
+        # Check if the result has a generation error
+        tech_log = result.get("technical_changelog", "")
+        if tech_log.startswith("## [Error]") or "Failed to generate changelog" in tech_log:
+            raise ValueError("AI service temporarily unavailable")
+            
+        # Enrich response with stats metadata
+        result["total_commits"] = changes_data["total_commits"]
+        result["was_capped"] = changes_data["was_capped"]
+        result["pr_count"] = changes_data["pr_count"]
         
         return result
         

@@ -1,5 +1,4 @@
-// Mock data for zero-fail live presentation mode
-export const DEMO_MODE_DEFAULT = true;
+export const DEMO_MODE = true;
 
 export const demoData = {
   technical_changelog: `# Changelog
