@@ -1,0 +1,48 @@
+name: GitNotes Automate Changelog Cron
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # Runs daily at midnight UTC
+  workflow_dispatch:     # Allows manual trigger
+
+permissions:
+  contents: write        # Required to push CHANGELOG.md back to the repository
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+
+    - name: Install Dependencies
+      run: |
+        pip install httpx groq python-dotenv
+
+    - name: Run Auto Changelog Generation
+      env:
+        GITHUB_TOKEN: ${{ secrets.GH_CRON_TOKEN || github.token }}
+        GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+        REPOSITORY_URL: "https://github.com/${{ github.repository }}"
+      run: |
+        python scripts/cron_generate.py
+
+    - name: Commit and Push Changes
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git add CHANGELOG.md
+        if git diff --staged --quiet; then
+          echo "No changes in CHANGELOG.md. Skipping push."
+        else
+          git commit -m "docs: auto-update CHANGELOG.md [cron]"
+          git push
+        fi
