@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { CheckCircle2, Loader2 } from 'lucide-react';
+import { Terminal, Check, Loader2 } from 'lucide-react';
 
 const STEPS = [
-  "Fetching commits & merged PRs from GitHub REST API...",
-  "Analyzing and filtering commit histories...",
-  "Invoking Groq LLaMA 3.1 agent critic loop...",
-  "Structuring Technical Changelog and Executive Summary..."
+  "🔍 Ingesting repository commit history...",
+  "🧠 Processing through Agentic Critic Loop...",
+  "📝 Compiling technical changelog markdown...",
+  "✨ Structural validation verified. Rendering assets..."
 ];
 
 export default function LoadingState() {
@@ -30,19 +30,21 @@ export default function LoadingState() {
   const estimatedSeconds = Math.max(1, totalSteps - activeStep);
 
   return (
-    <div className="bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-2xl p-8 shadow-xl shadow-black/30 flex flex-col items-center justify-center min-h-[350px] animate-pulse-subtle">
-      {/* Loading Spinner */}
-      <div className="relative flex items-center justify-center mb-8">
-        <div className="w-16 h-16 border-4 border-indigo-500/10 border-t-indigo-500 rounded-full animate-spin" />
-        <Loader2 className="w-8 h-8 text-indigo-400 animate-spin absolute" style={{ animationDuration: '3s' }} />
+    <div className="bg-black border border-zinc-850 rounded-lg p-6 font-mono text-xs shadow-md space-y-5 text-zinc-400">
+      
+      {/* Terminal Title Bar */}
+      <div className="flex items-center gap-1.5 border-b border-zinc-900 pb-3">
+        <div className="w-2.5 h-2.5 rounded-full bg-zinc-800" />
+        <div className="w-2.5 h-2.5 rounded-full bg-zinc-800" />
+        <div className="w-2.5 h-2.5 rounded-full bg-zinc-800" />
+        <span className="text-[10px] text-zinc-500 uppercase tracking-widest ml-2 flex items-center gap-1.5">
+          <Terminal className="w-3.5 h-3.5 text-zinc-500" />
+          <span>GitNotes Terminal</span>
+        </span>
       </div>
 
-      {/* Steps List */}
-      <div className="w-full max-w-md space-y-4">
-        <h3 className="text-center font-medium text-slate-350 text-xs mb-6 uppercase tracking-wider">
-          AI Release Notes Generation in Progress
-        </h3>
-        
+      {/* Progressing Steps */}
+      <div className="space-y-3.5 py-2">
         {STEPS.map((step, idx) => {
           const isDone = idx < activeStep;
           const isActive = idx === activeStep;
@@ -50,26 +52,31 @@ export default function LoadingState() {
           return (
             <div
               key={idx}
-              className={`flex items-center gap-3 transition-all duration-300 ${
-                isDone ? 'text-slate-400' : isActive ? 'text-indigo-400 font-semibold scale-[1.01]' : 'text-slate-600'
+              className={`flex items-start gap-3 transition-colors duration-300 ${
+                isDone 
+                  ? 'text-zinc-500' 
+                  : isActive 
+                    ? 'text-zinc-100 font-semibold' 
+                    : 'text-zinc-700'
               }`}
             >
               {isDone ? (
-                <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
+                <span className="text-emerald-500 shrink-0 select-none">✓</span>
               ) : isActive ? (
-                <Loader2 className="w-5 h-5 animate-spin shrink-0 text-indigo-400" />
+                <span className="text-zinc-400 shrink-0 animate-pulse select-none">❯</span>
               ) : (
-                <div className="w-5 h-5 rounded-full border-2 border-slate-800 shrink-0" />
+                <span className="text-zinc-800 shrink-0 select-none">·</span>
               )}
-              <span className="text-sm">{step}</span>
+              <span>{step}</span>
             </div>
           );
         })}
       </div>
 
-      {/* Step Counter Notice */}
-      <div className="mt-8 text-xs font-semibold text-slate-400 bg-slate-950/80 border border-slate-850 px-4 py-2.5 rounded-full shadow-inner">
-        Step {currentStepNum} of {totalSteps} — Estimated time: ~{estimatedSeconds} seconds
+      {/* Terminal Info Footer */}
+      <div className="flex items-center justify-between border-t border-zinc-900 pt-3 text-[10px] text-zinc-500 uppercase tracking-wider">
+        <span>Step {currentStepNum} of {totalSteps}</span>
+        <span>Estimated: ~{estimatedSeconds}s</span>
       </div>
     </div>
   );

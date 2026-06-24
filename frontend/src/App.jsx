@@ -6,7 +6,6 @@ import InputPanel from './components/InputPanel';
 import LoadingState from './components/LoadingState';
 import BreakingBanner from './components/BreakingBanner';
 import OutputTabs from './components/OutputTabs';
-import DownloadButtons from './components/DownloadButtons';
 
 // Import demo data
 import { demoData, DEMO_MODE } from './demoData';
@@ -84,44 +83,35 @@ export default function App() {
   const breakingChangesCount = result?.categories?.breaking?.length || 0;
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col selection:bg-indigo-500/30 selection:text-indigo-200">
-      {/* Background Gradient Orbs */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-indigo-500/5 blur-[120px]" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-violet-500/5 blur-[120px]" />
-      </div>
-
-      {/* Navigation Header */}
-      <header className="sticky top-0 z-50 bg-slate-950/80 backdrop-blur-md border-b border-slate-900 px-6 py-4">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="bg-gradient-to-tr from-indigo-600 to-violet-600 p-2 rounded-xl shadow-lg shadow-indigo-500/10">
-              <GitBranch className="w-6 h-6 text-white" />
+    <div className="min-h-screen bg-black text-zinc-300 flex flex-col font-sans antialiased selection:bg-zinc-800 selection:text-white">
+      
+      {/* Hyper-Minimalist Vercel-inspired Header */}
+      <header className="sticky top-0 z-50 bg-black/85 backdrop-blur-sm border-b border-zinc-900 px-6 py-3.5">
+        <div className="max-w-6xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="bg-zinc-100 p-1.5 rounded text-zinc-950">
+              <GitBranch className="w-4 h-4" />
             </div>
             <div>
-              <h1 className="text-lg font-bold tracking-tight bg-gradient-to-r from-white via-slate-150 to-slate-300 bg-clip-text text-transparent">
-                GitNotes
-              </h1>
-              <p className="text-[10px] text-slate-450 uppercase tracking-widest font-semibold">
-                Release Intelligence Agent
-              </p>
+              <span className="text-sm font-bold tracking-wider text-white">GITNOTES</span>
+              <span className="text-[9px] text-zinc-500 font-mono tracking-widest ml-3 uppercase">Release Intelligence</span>
             </div>
           </div>
-          <div className="text-xs bg-slate-900 border border-slate-800 rounded-full px-3 py-1.5 font-medium text-slate-400">
-            6-Hour Hackathon Build v1.0
+          <div className="text-[10px] font-mono border border-zinc-850 rounded px-2.5 py-1 text-zinc-400">
+            Hackathon Edition v1.0
           </div>
         </div>
       </header>
 
-      {/* Main Content Body */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-6 py-8 z-10 grid grid-cols-1 lg:grid-cols-12 gap-8">
+      {/* Main Container Layout */}
+      <main className="flex-1 max-w-6xl w-full mx-auto px-6 py-10 grid grid-cols-1 lg:grid-cols-12 gap-8 z-10">
         
-        {/* Left Column - Configurations */}
-        <section className="lg:col-span-4 space-y-6">
-          <div className="space-y-2">
-            <h2 className="text-xl font-bold text-white tracking-tight">Source Parameters</h2>
-            <p className="text-sm text-slate-400 leading-relaxed">
-              Enter details for any public repository. The LLaMA agent will fetch historical logs, structure your commits, and categorize them dynamically.
+        {/* Left Configurations Pane */}
+        <section className="lg:col-span-4 space-y-5">
+          <div className="space-y-1">
+            <h2 className="text-sm font-bold text-white uppercase tracking-wider">Source Configuration</h2>
+            <p className="text-xs text-zinc-500 leading-relaxed">
+              Target any public GitHub repository tags. The LLM critic agent will ingest raw commit diffs and normalize them.
             </p>
           </div>
 
@@ -139,35 +129,35 @@ export default function App() {
 
           {/* Commit Capping Notice */}
           {result && result.was_capped && (
-            <div className="text-xs text-amber-400 bg-amber-500/5 border border-amber-500/10 rounded-xl p-4 text-center animate-fade-in font-medium">
+            <div className="text-[11px] font-mono text-amber-500 bg-amber-955/10 border border-amber-900/30 rounded p-3 text-center">
               ⚠️ Analyzing top 50 of {result.total_commits} commits
             </div>
           )}
         </section>
 
-        {/* Right Column - Results Display */}
-        <section className="lg:col-span-8 space-y-6">
+        {/* Right Output Viewer Pane */}
+        <section className="lg:col-span-8 space-y-5">
           {isLoading && (
             <LoadingState />
           )}
 
           {error && (
-            <div className="bg-rose-500/10 border border-rose-500/20 rounded-2xl p-6 flex gap-4 items-start shadow-lg shadow-rose-500/5 animate-fade-in">
-              <AlertCircle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
-              <div className="space-y-2 flex-1">
-                <h4 className="font-semibold text-rose-250 text-sm">Changelog Pipeline Error</h4>
-                <p className="text-xs text-rose-300 leading-relaxed">{error}</p>
+            <div className="bg-red-950/10 border border-red-900 rounded p-5 flex gap-4 items-start shadow-sm">
+              <AlertCircle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
+              <div className="space-y-3 flex-1">
+                <h4 className="font-semibold text-red-400 text-xs uppercase tracking-wider">Pipeline Failure</h4>
+                <p className="text-xs text-zinc-400 leading-relaxed">{error}</p>
                 
                 {error.toLowerCase().includes("rate limit") && (
-                  <div className="text-[11px] text-amber-300 bg-amber-500/5 border border-amber-500/15 rounded-xl p-3.5 mt-2 leading-relaxed">
-                    💡 <strong>Tip:</strong> Toggle <code>DEMO_MODE = true</code> inside <code>demoData.js</code> to utilize cached data and bypass API restrictions during demonstrations.
+                  <div className="text-[10px] font-mono text-amber-500 bg-amber-950/10 border border-amber-900/30 p-3 rounded leading-relaxed">
+                    💡 Tip: Toggle the DEMO_MODE configuration to true inside demoData.js to run with pre-cached assets and bypass API rates.
                   </div>
                 )}
                 
-                <div className="pt-2">
+                <div>
                   <button
                     onClick={handleTryAgain}
-                    className="bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold px-4 py-2 rounded-xl transition-all active:scale-[0.98] shadow-md shadow-rose-650/20"
+                    className="bg-red-900/25 border border-red-800 text-red-400 hover:bg-red-900/40 text-xs font-semibold px-3 py-1.5 rounded transition"
                   >
                     Try Again
                   </button>
@@ -177,60 +167,44 @@ export default function App() {
           )}
 
           {result && !isLoading && (
-            <div className="space-y-6 animate-fade-in">
+            <div className="space-y-5">
               
-              {/* Stats Banner & Header details combined */}
-              <div className="space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-900/30 border border-slate-900 rounded-2xl p-6">
-                  <div>
-                    <h3 className="font-semibold text-slate-200 text-sm md:text-base">
-                      Comparison Target: {fromTag} ... {toTag}
-                    </h3>
-                    <p className="text-xs text-slate-450 mt-1">
-                      Repository URL: <a href={repoUrl} target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:underline">{repoUrl}</a>
-                    </p>
-                  </div>
-                  <DownloadButtons
-                    technicalContent={result.technical_changelog}
-                    executiveContent={result.executive_summary}
-                    version={toTag}
-                  />
+              {/* Stats Summary row */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-zinc-950 border border-zinc-900 rounded p-4 text-xs font-mono text-zinc-400">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-zinc-600">Repo:</span>
+                  <a href={repoUrl} target="_blank" rel="noopener noreferrer" className="text-zinc-300 hover:text-white underline">{repoUrl.replace("https://github.com/", "")}</a>
                 </div>
-
-                {/* 5. STATS BANNER */}
-                <div className="text-xs md:text-sm text-slate-350 bg-slate-900/40 border border-slate-800/80 rounded-xl px-4 py-3 flex items-center gap-2 font-medium">
-                  <span>📊</span>
-                  <span>
-                    Analyzed <strong>{result.total_commits}</strong> commits · <strong>{result.pr_count}</strong> PRs · Generated in <strong>{result.generation_time}s</strong> · <strong>{breakingChangesCount}</strong> breaking change{breakingChangesCount !== 1 ? 's' : ''}
-                  </span>
+                <div>
+                  <span>📊 Analyzed <strong>{result.total_commits}</strong> commits · <strong>{result.pr_count}</strong> PRs · In <strong>{result.generation_time}s</strong> · <strong>{breakingChangesCount}</strong> breaking</span>
                 </div>
               </div>
 
-              {/* Breaking Warning if flagged */}
+              {/* Breaking warning tag banner */}
               {result.breaking_detected && (
                 <BreakingBanner breakingChanges={result.categories?.breaking} />
               )}
 
-              {/* Tabs Content */}
+              {/* Output Tabs & Breakdown charts */}
               <OutputTabs result={result} />
             </div>
           )}
 
           {!result && !isLoading && !error && (
-            <div className="border border-dashed border-slate-800/80 rounded-2xl p-12 text-center flex flex-col items-center justify-center min-h-[450px] bg-slate-900/10">
-              <div className="bg-slate-900/50 p-4 rounded-full border border-slate-850 text-indigo-400/80 mb-4 shadow-inner">
-                <Layers className="w-8 h-8" />
+            <div className="border border-dashed border-zinc-850 rounded-lg p-12 text-center flex flex-col items-center justify-center min-h-[400px]">
+              <div className="bg-zinc-950 p-3 rounded border border-zinc-900 text-zinc-500 mb-4">
+                <Layers className="w-5 h-5" />
               </div>
-              <h3 className="font-bold text-slate-200 text-base mb-1.5">No Release Artifacts Generated</h3>
-              <p className="text-sm text-slate-450 max-w-sm leading-relaxed mb-6">
-                Define your target repository and tag markers on the left, then click Generate to trigger the release analysis agent.
+              <h3 className="font-semibold text-zinc-200 text-xs uppercase tracking-wider mb-1">Workspace Idle</h3>
+              <p className="text-xs text-zinc-550 max-w-xs leading-relaxed mb-5">
+                Define the repository parameters and tag range, then compile the artifacts.
               </p>
               {DEMO_MODE && (
                 <button
                   onClick={handleGenerate}
-                  className="bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 text-xs font-semibold px-4 py-2 rounded-xl border border-indigo-500/25 transition-all active:scale-[0.98]"
+                  className="bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 text-zinc-300 text-xs font-semibold px-4.5 py-1.5 rounded transition active:scale-95"
                 >
-                  Quick Demo (Pre-cached)
+                  Quick Demo (Offline)
                 </button>
               )}
             </div>
@@ -240,12 +214,12 @@ export default function App() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-slate-900/80 py-6 text-center text-xs text-slate-500">
-        <div className="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p>© 2026 GitNotes Agent. Open source under MIT License.</p>
+      <footer className="border-t border-zinc-900 py-6 text-center text-[10px] font-mono text-zinc-600">
+        <div className="max-w-6xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p>© 2026 GitNotes. MIT License.</p>
           <div className="flex gap-4">
-            <a href="#" className="hover:text-slate-350 transition-colors">Documentation</a>
-            <a href="#" className="hover:text-slate-350 transition-colors">GitHub Repository</a>
+            <a href="#" className="hover:text-zinc-400 transition">Docs</a>
+            <a href="https://github.com/Vijajraj/Gitnotes" target="_blank" rel="noopener noreferrer" className="hover:text-zinc-400 transition">GitHub</a>
           </div>
         </div>
       </footer>
