@@ -1,41 +1,78 @@
 @import "tailwindcss";
 
 @theme {
-  --color-brand-50: #f5f7fa;
-  --color-brand-100: #eaf0f6;
-  --color-brand-200: #d0dfed;
-  --color-brand-300: #a7c5df;
-  --color-brand-400: #76a5cc;
-  --color-brand-500: #5388b7;
-  --color-brand-600: #406e9c;
-  --color-brand-700: #345980;
-  --color-brand-800: #2e4c6b;
-  --color-brand-900: #29415a;
-  --color-brand-950: #1b2a3c;
+  --color-bg-base: #0A0F1A;
+  --color-bg-panel: #0D1420;
+  --color-border-dim: #1E2D45;
+  --color-border-active: #2D7EF8;
+  --color-text-dim: #3D5278;
+  --color-text-muted: #94A3B8;
+  --color-text-label: #4A6490;
+  --color-brand-blue: #2D7EF8;
+  --color-brand-blue-hover: #1A6AE8;
 }
 
 @layer base {
   body {
-    @apply bg-gray-950 text-gray-100 antialiased;
+    background-color: var(--color-bg-base);
+    color: var(--color-text-muted);
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    @apply antialiased;
+  }
+  
+  code, pre, .font-mono {
+    font-family: 'JetBrains Mono', monospace;
   }
 }
 
-/* Custom scrollbar styling for beautiful dark aesthetics */
+/* Custom scrollbars matching the background */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
-
 ::-webkit-scrollbar-track {
-  background: #0b0f19;
+  background: #0A0F1A;
 }
-
 ::-webkit-scrollbar-thumb {
-  background: #1e293b;
-  border-radius: 4px;
+  background: #1E2D45;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #2D7EF8;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: #334155;
+/* Generate button loading sweep animation */
+@keyframes loadingSweep {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.animate-sweep {
+  animation: loadingSweep 2s infinite linear;
+}
+
+/* Tooltip hover animations for the pipeline sidebar */
+.pipeline-tooltip {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease-in-out;
+}
+
+.pipeline-node-container:hover .pipeline-tooltip {
+  opacity: 1;
+}
+
+/* Pulse animation for the active step */
+@keyframes pulseGlow {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(45, 126, 248, 0.4);
+  }
+  50% {
+    transform: scale(1.25);
+    box-shadow: 0 0 8px 3px rgba(45, 126, 248, 0.6);
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 1.8s infinite ease-in-out;
 }
