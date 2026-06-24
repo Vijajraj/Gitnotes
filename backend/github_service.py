@@ -37,6 +37,27 @@ def parse_github_url(url: str) -> tuple[str, str]:
         
     raise ValueError(f"Invalid GitHub repository URL: {url}")
 
+async def check_tag_exists(client: httpx.AsyncClient, owner: str, repo: str, tag: str, headers: dict) -> bool:
+    url = f"https://api.github.com/repos/{owner}/{repo}/commits/{tag}"
+    try:
+        resp = await client.get(url, headers=headers, timeout=10.0)
+        return resp.status_code == 200
+    except Exception:
+        return False
+
+async def resolve_tag(client: httpx.AsyncClient, owner: str, repo: str, tag: str, headers: dict) -> str:
+    # 1. Try exact tag
+    if await check_tag_exists(client, owner, repo, tag, headers):
+        return tag
+    
+    # 2. Try alternative with/without 'v' prefix
+    alt_tag = tag[1:] if tag.startswith('v') else f"v{tag}"
+    if await check_tag_exists(client, owner, repo, alt_tag, headers):
+        print(f"[OK] Resolved tag '{tag}' to '{alt_tag}'")
+        return alt_tag
+        
+    return tag
+
 async def fetch_changes(repo_url: str, from_tag: str, to_tag: str) -> Dict[str, Any]:
     """
     Fetches the commits between from_tag and to_tag using GitHub API.
@@ -53,17 +74,26 @@ async def fetch_changes(repo_url: str, from_tag: str, to_tag: str) -> Dict[str, 
     if token and token.strip():
         headers["Authorization"] = f"Bearer {token.strip()}"
         
-    api_url = f"https://api.github.com/repos/{owner}/{repo}/compare/{from_tag}...{to_tag}"
-    
     async with httpx.AsyncClient() as client:
-        response = await client.get(api_url, headers=headers, timeout=15.0)
+        # Pre-flight repo check to verify repository and credentials
+        repo_check = await client.get(f"https://api.github.com/repos/{owner}/{repo}", headers=headers)
         
         # Handle 401 Unauthorized (Bad credentials) gracefully by falling back to unauthenticated
-        if response.status_code == 401 and "Authorization" in headers:
+        if repo_check.status_code == 401 and "Authorization" in headers:
             print("[WARN] GitHub token returned 401 (Bad Credentials). Retrying without token...")
             del headers["Authorization"]
-            response = await client.get(api_url, headers=headers, timeout=15.0)
+            repo_check = await client.get(f"https://api.github.com/repos/{owner}/{repo}", headers=headers)
             
+        if repo_check.status_code == 404:
+            raise ValueError(f"Repository {owner}/{repo} does not exist")
+            
+        # Resolve tags (dynamically handles v-prefix mismatch)
+        resolved_from = await resolve_tag(client, owner, repo, from_tag, headers)
+        resolved_to = await resolve_tag(client, owner, repo, to_tag, headers)
+        
+        api_url = f"https://api.github.com/repos/{owner}/{repo}/compare/{resolved_from}...{resolved_to}"
+        response = await client.get(api_url, headers=headers, timeout=15.0)
+        
         # Check for rate limiting specifically
         if response.status_code in (403, 429):
             rate_limit_remaining = response.headers.get("x-ratelimit-remaining")
@@ -72,17 +102,12 @@ async def fetch_changes(repo_url: str, from_tag: str, to_tag: str) -> Dict[str, 
         
         # Check for not found errors specifically
         if response.status_code == 404:
-            # 1. Diagnose if the repository exists
-            repo_check = await client.get(f"https://api.github.com/repos/{owner}/{repo}", headers=headers)
-            if repo_check.status_code == 404:
-                raise ValueError(f"Repository {owner}/{repo} does not exist")
-                
-            # 2. Diagnose which tag is missing
-            from_check = await client.get(f"https://api.github.com/repos/{owner}/{repo}/commits/{from_tag}", headers=headers)
+            # Diagnose which tag is missing (using the original inputs for error message consistency)
+            from_check = await client.get(f"https://api.github.com/repos/{owner}/{repo}/commits/{resolved_from}", headers=headers)
             if from_check.status_code == 404:
                 raise ValueError(f"Tag '{from_tag}' not found in {owner}/{repo}")
                 
-            to_check = await client.get(f"https://api.github.com/repos/{owner}/{repo}/commits/{to_tag}", headers=headers)
+            to_check = await client.get(f"https://api.github.com/repos/{owner}/{repo}/commits/{resolved_to}", headers=headers)
             if to_check.status_code == 404:
                 raise ValueError(f"Tag '{to_tag}' not found in {owner}/{repo}")
                 
