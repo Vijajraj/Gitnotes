@@ -1,5 +1,33 @@
 # Release Notes
 
+## [v2.1.0] - Date
+
+### Added
+- Full-stack application with FastAPI backend and React frontend
+- Category breakdowns, clipboard, stats banner, step progress, demo mode, and error diagnostic features
+- Github action cron job workflow and scripts/cron_generate.py
+- Dynamic tag prefix resolution
+- Optional label for tag inputs in UI
+- Premium Linear-meets-Vercel frontend redesign
+- Minimal Vercel/Linear developer aesthetic frontend layout
+
+### Fixed
+- JSON validation failed due to token limits in groq service
+- Unicode bug and lint warnings
+- Implement graceful 401 fallback for invalid github token
+- Reduce commit capping and description limits to stay within Groq 6000 TPM limit
+- Resolve v-prefix mismatch
+
+### Changed
+- Make git tags optional in UI and fetch recent commits as fallback in backend
+- Make API URL dynamic
+- Set light theme as the default preference
+- Revert backend to original direct Groq pipeline without LangGraph/LangSmith
+- Disable DEMO_MODE to enable live API pipeline
+- Enable DEMO_MODE by default to bypass rate limits
+
+---
+
 ## v2.1.0 - Date
 
 ### Added
