@@ -1,5 +1,30 @@
 # Release Notes
 
+## v2.1.0 - Date
+
+### Added
+- Added github action cron job workflow and scripts/cron_generate.py
+- Made git tags optional in UI and fetch recent commits as fallback in backend
+- Implemented premium Linear-meets-Vercel frontend redesign
+- Redesigned frontend layout following minimal Vercel/Linear developer aesthetic
+
+### Fixed
+- Resolved JSON validation failed due to token limits in groq service
+- Reduced commit capping and description limits to stay within Groq 6000 TPM limit
+- Forced override env variables using load_dotenv(override=True)
+- Implemented dynamic tag prefix resolution (v-prefix mismatch)
+- Implemented graceful 401 fallback for invalid github token
+- Resolved lint warnings, unicode bug, and added backend test suite
+
+### Changed
+- Made API URL dynamic and added Render Blueprint
+- Set light theme as the default preference
+- Switched to llama-3.3-70b-versatile and configured max_tokens to 3500
+- Updated README.md with comprehensive documentation, setup, features, and API specifications
+- Updated README with Render blueprint, Vercel deployments, and design features
+
+---
+
 ## [v2.1.0] - Date
 
 ### Added
