@@ -1,5 +1,28 @@
 # Release Notes
 
+## v2.1.0 - Date
+
+### Added
+- GitHub action cron job workflow and scripts/cron_generate.py
+- Dynamic tag prefix resolution
+- Optional label for tag inputs in UI
+- Premium Linear-meets-Vercel frontend redesign
+- Render blueprint and Vercel deployments documentation
+- Setup, features, and API specifications documentation
+
+### Fixed
+- JSON validation failed due to token limits in groq service
+- Implement dynamic tag prefix resolution (v-prefix mismatch)
+- Reduce commit capping and description limits to stay within Groq 6000 TPM limit
+- Resolve 401 fallback for invalid github token
+
+### Changed
+- Revert backend to original direct Groq pipeline without LangGraph/LangSmith
+- Set light theme as the default preference
+- Switch to llama-3.3-70b-versatile and configure max_tokens to 3500
+
+---
+
 ## [v2.1.0] - Date
 
 ### Added
