@@ -3,6 +3,30 @@
 ## v2.1.0 - Date
 
 ### Added
+- Implemented premium Linear-meets-Vercel frontend redesign
+- Added github action cron job workflow and scripts/cron_generate.py
+- Made git tags optional in UI and fetch recent commits as fallback in backend
+
+### Fixed
+- Resolved JSON validation failed due to token limits in groq service
+- Implemented dynamic tag prefix resolution (v-prefix mismatch)
+- Implemented graceful 401 fallback for invalid github token
+- Reduced commit capping and description limits to stay within Groq 6000 TPM limit
+
+### Changed
+- Updated README.md with comprehensive documentation
+- Updated README with Render blueprint, Vercel deployments, and design features
+- Made API URL dynamic and added Render Blueprint
+- Set light theme as the default preference
+- Reverted backend to original direct Groq pipeline without LangGraph/LangSmith
+- Disabled DEMO_MODE to enable live API pipeline
+- Enabled DEMO_MODE by default to bypass rate limits
+
+---
+
+## v2.1.0 - Date
+
+### Added
 - GitHub action cron job workflow and scripts/cron_generate.py
 - Dynamic tag prefix resolution
 - Optional label for tag inputs in UI
