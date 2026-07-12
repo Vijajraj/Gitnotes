@@ -3,6 +3,26 @@
 ## [Version] - Date
 
 ### Added
+- Implemented premium Linear-meets-Vercel frontend redesign
+- Added github action cron job workflow and scripts/cron_generate.py
+- Made git tags optional in UI and fetch recent commits as fallback in backend
+
+### Fixed
+- Resolved JSON validation failed due to token limits in groq service
+- Switched to llama-3.3-70b-versatile and configured max_tokens to 3500
+
+### Changed
+- Updated README.md with comprehensive documentation, setup, features, and API specifications
+- Redesigned frontend layout following minimal Vercel/Linear developer aesthetic
+- Set light theme as the default preference
+- Made API URL dynamic and added Render Blueprint
+- Reverted backend to original direct Groq pipeline without LangGraph/LangSmith
+
+---
+
+## [Version] - Date
+
+### Added
 - Added github action cron job workflow and scripts/cron_generate.py
 - Made git tags optional in UI and fetch recent commits as fallback in backend
 - Implemented premium Linear-meets-Vercel frontend redesign
