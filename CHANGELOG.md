@@ -3,6 +3,24 @@
 ## [Version] - Date
 
 ### Added
+- Comprehensive documentation in README.md
+- Render blueprint and Vercel deployments documentation
+- Premium Linear-meets-Vercel frontend redesign
+- Dynamic API URL
+
+### Fixed
+- JSON validation failed due to token limits in groq service
+- Switched to llama-3.3-70b-versatile and configured max_tokens to 3500
+
+### Changed
+- Set light theme as the default preference
+- Display optional label for tag inputs in UI
+
+---
+
+## [Version] - Date
+
+### Added
 - Added github action cron job workflow and scripts/cron_generate.py
 - Implemented premium Linear-meets-Vercel frontend redesign
 - Updated README with comprehensive documentation, Render blueprint, Vercel deployments, and design features
