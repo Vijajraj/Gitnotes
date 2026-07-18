@@ -5,6 +5,27 @@
 ### Added
 - Comprehensive documentation in README.md
 - Render blueprint and Vercel deployments documentation
+- Design features documentation
+- Dynamic API URL
+- Optional label for tag inputs in UI
+
+### Fixed
+- JSON validation failed due to token limits in groq service
+- Switched to llama-3.3-70b-versatile and configured max_tokens to 3500
+
+### Changed
+- Set light theme as the default preference
+
+### Chores
+- Updated CHANGELOG.md multiple times via cron job
+
+---
+
+## [Version] - Date
+
+### Added
+- Comprehensive documentation in README.md
+- Render blueprint and Vercel deployments documentation
 - Premium Linear-meets-Vercel frontend redesign
 - Dynamic API URL
 
