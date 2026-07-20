@@ -3,6 +3,21 @@
 ## [Version] - Date
 
 ### Added
+- Updated README.md with comprehensive documentation
+- Added Render blueprint, Vercel deployments, and design features to README
+
+### Fixed
+- Resolved JSON validation failed due to token limits in groq service
+- Switched to llama-3.3-70b-versatile and configured max_tokens to 3500
+
+### Changed
+- Display optional label for tag inputs in UI
+
+---
+
+## [Version] - Date
+
+### Added
 - Comprehensive documentation in README.md
 - Render blueprint and Vercel deployments documentation
 - Design features documentation
