@@ -3,6 +3,21 @@
 ## [Version] - Date
 
 ### Added
+- Comprehensive documentation in README.md
+- Render blueprint, Vercel deployments, and design features in README
+- Optional label for tag inputs in UI
+
+### Fixed
+- Switched to llama-3.3-70b-versatile and configured max_tokens to 3500
+
+### Chores
+- Multiple auto-updates of CHANGELOG.md
+
+---
+
+## [Version] - Date
+
+### Added
 - Updated README.md with comprehensive documentation
 - Added Render blueprint, Vercel deployments, and design features to README
 
