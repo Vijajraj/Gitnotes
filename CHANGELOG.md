@@ -5,6 +5,21 @@
 ### Added
 - Comprehensive documentation in README.md
 - Render blueprint, Vercel deployments, and design features in README
+
+### Fixed
+- No bug fixes detected
+
+### Changed
+- Updated CHANGELOG.md multiple times via cron job
+- Display optional label for tag inputs in UI
+
+---
+
+## [Version] - Date
+
+### Added
+- Comprehensive documentation in README.md
+- Render blueprint, Vercel deployments, and design features in README
 - Optional label for tag inputs in UI
 
 ### Fixed
