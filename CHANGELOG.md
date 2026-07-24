@@ -9,6 +9,19 @@
 - No bugs fixed
 
 ### Changed
+- Updated CHANGELOG.md and README.md
+
+---
+
+## [Version] - Date
+
+### Added
+- No new features added
+
+### Fixed
+- No bugs fixed
+
+### Changed
 - Updated CHANGELOG.md and README.md with comprehensive documentation
 
 ---
