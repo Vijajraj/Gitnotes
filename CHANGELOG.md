@@ -30,6 +30,13 @@
 
 ## [Version] - Date
 
+### Chores
+- Automated updates to CHANGELOG.md
+
+---
+
+## [Version] - Date
+
 ### Added
 - No new features added
 
